@@ -1,10 +1,10 @@
 import  { useState } from 'react';
-import { lotteryParticipants, lotteryDraws, ticketLog, initialLotterySettings } from '../data/mockData';
-import { getTypeLabel, getSourceLabel } from '../src/utils/helpers';
+import { lotteryParticipants, lotteryDraws, ticketLog, initialLotterySettings } from '../data/mockData'
+import { getTypeLabel, getSourceLabel } from '../utils/helpers';
 import TicketModal from '../components/TicketModal';
 
 // ===== Sub-tab: Participants =====
-const ParticipantsTab = ({ settings }) => {
+const ParticipantsTab = () => {
   const [search, setSearch] = useState('');
   const [modalParticipant, setModalParticipant] = useState(null);
 

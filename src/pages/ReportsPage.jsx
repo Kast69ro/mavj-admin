@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Download } from 'lucide-react';
 import { companies } from '../data/mockData';
-import { exportToCSV } from '../src/utils/helpers';
+import { exportToCSV } from '../utils/helpers';
 
 const ReportsPage = () => {
   const [selectedCompany, setSelectedCompany] = useState('');

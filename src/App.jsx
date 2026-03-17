@@ -3,18 +3,18 @@ import { BrowserRouter, Routes, Route, NavLink, useNavigate } from 'react-router
 import { Home, Users, BarChart3, Upload, LogOut } from 'lucide-react';
 
 // Pages
-import LoginPage        from '../pages/LoginPage';
-import MainPage         from '../pages/MainPage';
-import SubscribersPage  from '../pages/SubscribersPage';
-import ReportsPage      from '../pages/ReportsPage';
-import QuestionsPage    from '../pages/QuestionsPage';
-import LotteryPage      from '../pages/LotteryPage';
-import WinnersPage      from '../pages/WinnersPage';
-import AnalyticsPage    from '../pages/AnalyticsPage';
-import SettingsPage     from '../pages/SettingsPage';
-import LoginHistoryPage from '../pages/LoginHistoryPage';
-import MonitoringPage   from '../pages/MonitoringPage';
-import BillingPage      from '../pages/BillingPage';
+import LoginPage        from './pages/LoginPage';
+import MainPage         from './pages/MainPage';
+import SubscribersPage  from './pages/SubscribersPage';
+import ReportsPage      from './pages/ReportsPage';
+import QuestionsPage    from './pages/QuestionsPage';
+import LotteryPage      from './pages/LotteryPage';
+import WinnersPage      from './pages/WinnersPage';
+import AnalyticsPage    from './pages/AnalyticsPage';
+import SettingsPage     from './pages/SettingsPage';
+import LoginHistoryPage from './pages/LoginHistoryPage';
+import MonitoringPage   from './pages/MonitoringPage';
+import BillingPage      from './pages/BillingPage';
 
 // ===== NAV CONFIG =====
 const NAV_ITEMS = [

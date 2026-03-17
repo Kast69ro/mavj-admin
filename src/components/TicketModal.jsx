@@ -1,4 +1,4 @@
-import { getSourceLabel } from '../src/utils/helpers';
+import { getSourceLabel } from '../utils/helpers';
 
 const TicketModal = ({ participant, onClose }) => {
   if (!participant) return null;
