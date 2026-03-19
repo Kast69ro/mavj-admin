@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, NavLink, useNavigate, Navigate } from 'react-router-dom';
 import { Home, Users, BarChart3, Upload, LogOut } from 'lucide-react';
 
 // Pages
@@ -97,7 +97,6 @@ const Layout = ({ user, onLogout }) => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
-      {/* Mobile header */}
       <div className="lg:hidden flex items-center justify-between p-4 bg-slate-900 text-white sticky top-0 z-20">
         <h1 className="text-lg font-bold">Панель управления</h1>
         <button onClick={() => setSidebarOpen(v => !v)} className="p-2 rounded-lg hover:bg-slate-700">
@@ -146,17 +145,25 @@ const App = () => {
   return (
     <BrowserRouter basename="/admin">
       <Routes>
-        <Route path="/login" element={<LoginPage onLogin={setUser} />} />
+        <Route
+          path="/login"
+          element={
+            user
+              ? <Navigate to="/" replace />
+              : <LoginPage onLogin={setUser} />
+          }
+        />
         <Route
           path="/*"
           element={
             user
               ? <Layout user={user} onLogout={() => setUser(null)} />
-              : <LoginPage onLogin={setUser} />
+              : <Navigate to="/login" replace />
           }
         />
       </Routes>
     </BrowserRouter>
   );
 };
+
 export default App;
