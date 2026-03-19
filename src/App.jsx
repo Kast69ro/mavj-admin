@@ -144,7 +144,7 @@ const App = () => {
   const [user, setUser] = useState(null);
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/admin">
       <Routes>
         <Route path="/login" element={<LoginPage onLogin={setUser} />} />
         <Route
@@ -159,5 +159,4 @@ const App = () => {
     </BrowserRouter>
   );
 };
-
 export default App;
