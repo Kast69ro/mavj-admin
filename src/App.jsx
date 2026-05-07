@@ -143,10 +143,10 @@ const App = () => {
   const [user, setUser] = useState(null);
 
   return (
-    <BrowserRouter basename="/admin">
+    <BrowserRouter>
       <Routes>
         <Route
-          path="/login"
+          path="login"
           element={
             user
               ? <Navigate to="/" replace />
@@ -154,11 +154,11 @@ const App = () => {
           }
         />
         <Route
-          path="/*"
+          path="*"
           element={
             user
               ? <Layout user={user} onLogout={() => setUser(null)} />
-              : <Navigate to="/login" replace />
+              : <Navigate to="login" replace />
           }
         />
       </Routes>
