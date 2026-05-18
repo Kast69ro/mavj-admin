@@ -1,20 +1,24 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { login } from '../features/auth/authApi';
+import { useNavigate } from 'react-router-dom';
 
-const LoginPage = ({ onLogin }) => {
+const LoginPage = () => {
   const [loginData, setLoginData] = useState({ username: '', password: '' });
-  const [loginError, setLoginError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { isLoading, error,token } = useSelector(state => state.auth);
+
+  useEffect(() => {
+    
+    if(token){
+      navigate('/')
+    }
+  }, [token]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setLoginError('');
-    if (loginData.username === 'Rais' && loginData.password === '$rA!$67@_27.') {
-      onLogin({ username: 'Rais', fullName: 'Главный администратор', role: 'admin' });
-    } else {
-      setLoginError('Неверный логин или пароль');
-    }
-    setIsLoading(false);
+    dispatch(login(loginData));
   };
 
   return (
@@ -39,9 +43,9 @@ const LoginPage = ({ onLogin }) => {
           </div>
 
           <div className="space-y-5">
-            {loginError && (
+            {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                {loginError}
+                {error}
               </div>
             )}
             <div>

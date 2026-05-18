@@ -1,116 +1,251 @@
-import React, { useState } from 'react';
-import { Upload } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  createQuiz,
+  deleteQuizQuestion,
+  fetchQuiz,
+  toggleQuizStatus,
+  updateQuiz,
+  uploadExcel,
+} from "../features/victorina/victorinaApi";
+import {
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Paper, Button, IconButton, Chip, Typography, Box, Dialog,
+  DialogTitle, DialogContent, DialogActions, TextField, Select,
+  MenuItem, FormControl, InputLabel, Pagination, Switch,
+} from "@mui/material";
+import { Edit, Delete, Add, Upload } from "@mui/icons-material";
+
+const emptyForm = {
+  question: "",
+  option_a: "",
+  option_b: "",
+  option_c: "",
+  option_d: "",
+  correct_answer: "",
+};
 
 const QuestionsPage = () => {
-  const [file, setFile] = useState(null);
-  const [loadedQuestions, setLoadedQuestions] = useState([]);
-  const [currentTestQuestion, setCurrentTestQuestion] = useState(0);
-  const [testAnswer, setTestAnswer] = useState('');
-  const [testHistory, setTestHistory] = useState([]);
+  const { questions, total } = useSelector((state) => state.victorina);
+  const dispatch = useDispatch();
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20);
+  const [open, setOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [excelOpen, setExcelOpen] = useState(false);
+  const [excelFile, setExcelFile] = useState(null);
+  const [selectedId, setSelectedId] = useState(null);
+  const [form, setForm] = useState(emptyForm);
+  const [isEdit, setIsEdit] = useState(false);
 
-  const handleFileUpload = (e) => {
-    const uploadedFile = e.target.files[0];
-    setFile(uploadedFile);
-    if (uploadedFile) {
-      setLoadedQuestions([
-        { question: 'Столица Таджикистана?', option1: 'Душанбе', option2: 'Бишкек', option3: 'Ташкент', option4: 'Алматы', correctAnswer: 1, points: 10 },
-        { question: 'Сколько континентов на Земле?', option1: '5', option2: '6', option3: '7', option4: '8', correctAnswer: 3, points: 10 },
-      ]);
-      setCurrentTestQuestion(0);
-      setTestHistory([]);
-    }
+  useEffect(() => {
+    dispatch(fetchQuiz({ page, limit }));
+  }, [dispatch, page]);
+
+  const handleAdd = () => {
+    setForm(emptyForm);
+    setIsEdit(false);
+    setOpen(true);
   };
 
-  const handleTestAnswer = () => {
-    if (!testAnswer) return;
-    const userAnswer = parseInt(testAnswer);
-    const currentQ = loadedQuestions[currentTestQuestion];
-    const isCorrect = userAnswer === currentQ.correctAnswer;
-    setTestHistory([...testHistory, {
-      question: currentQ.question,
-      userAnswer,
-      correctAnswer: currentQ.correctAnswer,
-      isCorrect,
-      points: isCorrect ? currentQ.points : 0
-    }]);
-    setTestAnswer('');
-    if (currentTestQuestion < loadedQuestions.length - 1) {
-      setCurrentTestQuestion(currentTestQuestion + 1);
-    }
+  const handleEdit = (row) => {
+    setForm({
+      question: row.question,
+      option_a: row.option_a,
+      option_b: row.option_b,
+      option_c: row.option_c,
+      option_d: row.option_d,
+      correct_answer: row.correct_answer,
+    });
+    setSelectedId(row.id);
+    setIsEdit(true);
+    setOpen(true);
   };
 
-  const currentQ = loadedQuestions[currentTestQuestion];
+  const handleDeleteOpen = (id) => {
+    setSelectedId(id);
+    setDeleteOpen(true);
+  };
+
+  const handleSave = () => {
+    if (isEdit) {
+      dispatch(updateQuiz({ id: selectedId, ...form }));
+    } else {
+      dispatch(createQuiz(form));
+    }
+    setOpen(false);
+  };
+
+  const handleDelete = () => {
+    dispatch(deleteQuizQuestion(selectedId));
+    setDeleteOpen(false);
+  };
+
+  const handleExcelUpload = () => {
+    if (!excelFile) return;
+    dispatch(uploadExcel(excelFile));
+    setExcelOpen(false);
+    setExcelFile(null);
+  };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">Добавление вопросов</h2>
+    <Box>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Typography variant="h5" fontWeight={700}>Вопросы</Typography>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button variant="outlined" startIcon={<Upload />} onClick={() => setExcelOpen(true)}>
+            Загрузить Excel
+          </Button>
+          <Button variant="contained" startIcon={<Add />} onClick={handleAdd}>
+            Добавить
+          </Button>
+        </Box>
+      </Box>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold mb-2">Загрузка файла</h3>
-        <p className="text-sm text-gray-500 mb-4">Файл загружается из ПК в Excel формате</p>
-        <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
-          <Upload size={40} className="mx-auto text-gray-400 mb-4" />
-          <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="hidden" id="file-upload" />
-          <label htmlFor="file-upload" className="cursor-pointer">
-            <span className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 inline-block text-sm font-medium">
-              Выбрать файл
-            </span>
-          </label>
-          {file && <p className="mt-4 text-sm text-emerald-600 font-medium">✔ Выбран файл: {file.name}</p>}
-        </div>
-      </div>
-
-      {file && loadedQuestions.length > 0 && currentTestQuestion < loadedQuestions.length && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold mb-4">Тест вопросов</h3>
-          <div className="bg-gray-50 rounded-xl p-4 mb-4">
-            <p className="text-lg font-semibold mb-4">{currentQ.question}</p>
-            <div className="space-y-2">
-              {[1, 2, 3, 4].map(num => (
-                <div key={num} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200">
-                  <span className="font-bold text-blue-600">{num}</span>
-                  <span className="text-sm">{currentQ[`option${num}`]}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <input
-              type="number"
-              min="1"
-              max="4"
-              value={testAnswer}
-              onChange={e => setTestAnswer(e.target.value)}
-              placeholder="Введите номер ответа (1-4)"
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm"
-            />
-            <button
-              onClick={handleTestAnswer}
-              disabled={!testAnswer}
-              className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 text-sm font-medium"
-            >
-              Отправить
-            </button>
-          </div>
-        </div>
-      )}
-
-      {testHistory.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold mb-4">История ответов</h3>
-          <div className="space-y-2">
-            {testHistory.map((h, idx) => (
-              <div key={idx} className={`p-3 rounded-lg border ${h.isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
-                <p className="text-sm font-medium">{h.question}</p>
-                <p className="text-xs text-gray-600 mt-1">
-                  Ваш ответ: {h.userAnswer} | Правильный: {h.correctAnswer} | {h.isCorrect ? `✔ +${h.points} баллов` : '✗'}
-                </p>
-              </div>
+      <TableContainer component={Paper} variant="outlined">
+        <Table>
+          <TableHead>
+            <TableRow sx={{ backgroundColor: "#f9fafb" }}>
+              <TableCell>№</TableCell>
+              <TableCell>Вопрос</TableCell>
+              <TableCell>A</TableCell>
+              <TableCell>B</TableCell>
+              <TableCell>C</TableCell>
+              <TableCell>D</TableCell>
+              <TableCell>Ответ</TableCell>
+              <TableCell>Статус</TableCell>
+              <TableCell align="right">Действия</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {Array.isArray(questions) && questions.map((row) => (
+              <TableRow key={row.id} hover>
+                <TableCell>{row.id}</TableCell>
+                <TableCell sx={{ maxWidth: 250 }}>{row.question}</TableCell>
+                <TableCell>{row.option_a}</TableCell>
+                <TableCell>{row.option_b}</TableCell>
+                <TableCell>{row.option_c}</TableCell>
+                <TableCell>{row.option_d}</TableCell>
+                <TableCell>
+                  <Chip label={row.correct_answer} size="small" color="primary" />
+                </TableCell>
+                <TableCell>
+                  <Chip
+                    label={row.is_active ? "Активен" : "Неактивен"}
+                    size="small"
+                    color={row.is_active ? "success" : "default"}
+                  />
+                </TableCell>
+                <TableCell align="right">
+                  <Switch
+                    checked={row.is_active}
+                    size="small"
+                    color="success"
+                    onChange={() => dispatch(toggleQuizStatus({ id: row.id, is_active: !row.is_active }))}
+                  />
+                  <IconButton size="small" color="primary" onClick={() => handleEdit(row)}>
+                    <Edit fontSize="small" />
+                  </IconButton>
+                  <IconButton size="small" color="error" onClick={() => handleDeleteOpen(row.id)}>
+                    <Delete fontSize="small" />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
             ))}
-          </div>
-        </div>
-      )}
-    </div>
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+        <Pagination
+          count={Math.ceil((total || 0) / limit)}
+          page={page}
+          onChange={(_, val) => setPage(val)}
+          color="primary"
+        />
+      </Box>
+
+      {/* Модалка добавить/редактировать */}
+      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>{isEdit ? "Редактировать вопрос" : "Добавить вопрос"}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <TextField
+              label="Вопрос"
+              value={form.question}
+              onChange={(e) => setForm({ ...form, question: e.target.value })}
+              fullWidth multiline rows={2}
+            />
+            <TextField label="Вариант A" value={form.option_a} onChange={(e) => setForm({ ...form, option_a: e.target.value })} fullWidth />
+            <TextField label="Вариант B" value={form.option_b} onChange={(e) => setForm({ ...form, option_b: e.target.value })} fullWidth />
+            <TextField label="Вариант C" value={form.option_c} onChange={(e) => setForm({ ...form, option_c: e.target.value })} fullWidth />
+            <TextField label="Вариант D" value={form.option_d} onChange={(e) => setForm({ ...form, option_d: e.target.value })} fullWidth />
+            <FormControl fullWidth>
+              <InputLabel>Правильный ответ</InputLabel>
+              <Select
+                value={form.correct_answer}
+                label="Правильный ответ"
+                onChange={(e) => setForm({ ...form, correct_answer: e.target.value })}
+              >
+                {["A", "B", "C", "D"].map((opt) => (
+                  <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>Отмена</Button>
+          <Button variant="contained" onClick={handleSave}>
+            {isEdit ? "Сохранить" : "Добавить"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Модалка удаления */}
+      <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)}>
+        <DialogTitle>Удалить вопрос?</DialogTitle>
+        <DialogContent>
+          <Typography>Это действие нельзя отменить.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteOpen(false)}>Отмена</Button>
+          <Button variant="contained" color="error" onClick={handleDelete}>Удалить</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Модалка Excel */}
+      <Dialog open={excelOpen} onClose={() => setExcelOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Загрузить вопросы из Excel</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2, border: '2px dashed #e0e0e0', borderRadius: 2, p: 4, textAlign: 'center' }}>
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              id="excel-upload"
+              style={{ display: 'none' }}
+              onChange={e => setExcelFile(e.target.files[0])}
+            />
+            <label htmlFor="excel-upload">
+              <Button variant="outlined" component="span" startIcon={<Upload />}>
+                Выбрать файл
+              </Button>
+            </label>
+            {excelFile && (
+              <Typography sx={{ mt: 2, color: 'success.main', fontSize: 14 }}>
+                ✔ {excelFile.name}
+              </Typography>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => { setExcelOpen(false); setExcelFile(null); }}>Отмена</Button>
+          <Button variant="contained" disabled={!excelFile} onClick={handleExcelUpload}>
+            Загрузить
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
 

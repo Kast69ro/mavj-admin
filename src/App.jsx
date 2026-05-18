@@ -1,22 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, useNavigate, Navigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 import { Home, Users, BarChart3, Upload, LogOut } from 'lucide-react';
 
-// Pages
 import LoginPage        from './pages/LoginPage';
 import MainPage         from './pages/MainPage';
 import SubscribersPage  from './pages/SubscribersPage';
 import ReportsPage      from './pages/ReportsPage';
 import QuestionsPage    from './pages/QuestionsPage';
-import LotteryPage      from './pages/LotteryPage';
 import WinnersPage      from './pages/WinnersPage';
 import AnalyticsPage    from './pages/AnalyticsPage';
 import SettingsPage     from './pages/SettingsPage';
 import LoginHistoryPage from './pages/LoginHistoryPage';
 import MonitoringPage   from './pages/MonitoringPage';
 import BillingPage      from './pages/BillingPage';
+import { Role } from './features/auth/authApi';
+import { logout } from './features/auth/authSlice';
 
-// ===== NAV CONFIG =====
 const NAV_ITEMS = [
   { path: '/',               label: 'Главная',       icon: <Home size={18} />,     end: true },
   { path: '/subscribers',   label: 'Абоненты',       icon: <Users size={18} /> },
@@ -30,9 +30,21 @@ const NAV_ITEMS = [
   { path: '/billing',       label: 'Биллинг',        icon: <span>💰</span> },
 ];
 
-// ===== SIDEBAR =====
-const Sidebar = ({ user, onLogout, isOpen, onClose }) => {
+const Sidebar = ({ isOpen, onClose }) => {
+  const { user, token } = useSelector(state => state.auth);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (token && !user) {
+      dispatch(Role());
+    }
+  }, [token, dispatch]);
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate('/login');
+  };
 
   return (
     <aside className={`
@@ -45,13 +57,10 @@ const Sidebar = ({ user, onLogout, isOpen, onClose }) => {
         <h1 className="text-xl font-bold">Панель управления</h1>
         <p className="text-xs text-slate-400 mt-1">SMS Викторина &amp; Лотерея</p>
       </div>
-
-      {user && (
-        <div className="px-5 py-3 border-b border-slate-700">
-          <p className="text-xs text-slate-400">Добро пожаловать</p>
-          <p className="font-medium text-sm">{user.fullName}</p>
-        </div>
-      )}
+      <div className="p-5 border-b border-slate-700">
+        <h4 className="text-lg">Добро пожаловать</h4>
+        <p className="text-lg text-slate-400 mt-1">{user?.username || 'Пользователь'}</p>
+      </div>
 
       <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
         {NAV_ITEMS.map(item => (
@@ -70,18 +79,13 @@ const Sidebar = ({ user, onLogout, isOpen, onClose }) => {
           >
             {item.icon}
             <span className="flex-1">{item.label}</span>
-            {item.badge && (
-              <span className="text-xs px-1.5 py-0.5 bg-amber-500 text-white rounded font-bold">
-                {item.badge}
-              </span>
-            )}
           </NavLink>
         ))}
       </nav>
 
       <div className="px-3 pb-5 pt-2 border-t border-slate-700">
         <button
-          onClick={() => { onLogout(); navigate('/login'); }}
+          onClick={handleLogout}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-red-600 hover:text-white transition text-sm"
         >
           <LogOut size={18} /> Выход
@@ -91,8 +95,7 @@ const Sidebar = ({ user, onLogout, isOpen, onClose }) => {
   );
 };
 
-// ===== LAYOUT =====
-const Layout = ({ user, onLogout }) => {
+const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -107,7 +110,7 @@ const Layout = ({ user, onLogout }) => {
         </button>
       </div>
 
-      <Sidebar user={user} onLogout={onLogout} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {sidebarOpen && (
         <div
@@ -123,7 +126,6 @@ const Layout = ({ user, onLogout }) => {
             <Route path="subscribers"   element={<SubscribersPage />} />
             <Route path="reports"       element={<ReportsPage />} />
             <Route path="questions"     element={<QuestionsPage />} />
-            {/* <Route path="lottery"       element={""} /> */}
             <Route path="winners"       element={<WinnersPage />} />
             <Route path="analytics"     element={<AnalyticsPage />} />
             <Route path="settings"      element={<SettingsPage />} />
@@ -138,28 +140,19 @@ const Layout = ({ user, onLogout }) => {
   );
 };
 
-// ===== APP =====
 const App = () => {
-  const [user, setUser] = useState(null);
+  const { token } = useSelector(state => state.auth);
 
   return (
     <BrowserRouter>
       <Routes>
         <Route
-          path="login"
-          element={
-            user
-              ? <Navigate to="/" replace />
-              : <LoginPage onLogin={setUser} />
-          }
+          path="/login"
+          element={token ? <Navigate to="/" replace /> : <LoginPage />}
         />
         <Route
           path="*"
-          element={
-            user
-              ? <Layout user={user} onLogout={() => setUser(null)} />
-              : <Navigate to="login" replace />
-          }
+          element={token ? <Layout /> : <Navigate to="/login" replace />}
         />
       </Routes>
     </BrowserRouter>
