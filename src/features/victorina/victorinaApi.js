@@ -8,7 +8,7 @@ export const fetchQuiz = createAsyncThunk(
       const { data } = await axiosRequest.get("/quiz/questions", {
         params: { page, limit },
       });
-      return data.questions;
+      return data;
     } catch (error) {
       return rejectWithValue(error.response?.data);
     }

@@ -7,6 +7,7 @@ const victorinaSlice = createSlice({
     questions: [],
     isLoading: false,
     error: null,
+    total:null
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -17,7 +18,8 @@ const victorinaSlice = createSlice({
       })
       .addCase(fetchQuiz.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.questions = action.payload;
+        state.questions = action.payload.questions;
+        state.total = action.payload.total;
       })
       .addCase(fetchQuiz.rejected, (state, action) => {
         state.isLoading = false;
