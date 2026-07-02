@@ -144,7 +144,7 @@ const App = () => {
   const { token } = useSelector(state => state.auth);
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/admin">
       <Routes>
         <Route
           path="/login"
