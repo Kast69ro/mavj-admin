@@ -17,11 +17,13 @@ const MainPage = ({ onNavigate }) => {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-800">Главная</h2>
-
       {/* Operator selector */}
       <div className="grid grid-cols-6 gap-3">
         {info?.operators?.map((op) => {
-          const colors = OPERATOR_COLORS[op.code];
+          const colors = OPERATOR_COLORS[op.code] ?? {
+            bg: "#9ca3af",
+            active: "#6b7280",
+          };
           const isActive = selectedOperator === op.code;
           const isDisabled = op.status === "coming_soon";
 
@@ -52,7 +54,7 @@ const MainPage = ({ onNavigate }) => {
             </button>
           );
         })}
-      </div>
+      </div>{" "}
       {/* Billing table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-semibold mb-4">Тарификация</h3>
@@ -89,7 +91,6 @@ const MainPage = ({ onNavigate }) => {
             </tbody>
           </table>
         </div>
-      
       </div>
     </div>
   );

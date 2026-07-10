@@ -3,6 +3,7 @@ export const OPERATOR_COLORS = {
   tcell: { bg: "#a855f7", active: "#9333ea" },
   anor: { bg: "#3b82f6", active: "#2563eb" },
   o_mobile: { bg: "#ef4444", active: "#dc2626" },
-  zet_mobile: { bg: "#f97316", active: "#ea580c" },
+  zet: { bg: "#f97316", active: "#ea580c" },
   babilon: { bg: "#eab308", active: "#ca8a04" },
+  default: { bg: "#9ca3af", active: "#6b7280" },
 };
