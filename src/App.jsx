@@ -21,6 +21,7 @@ import SettingsPage from "./pages/SettingsPage";
 import LoginHistoryPage from "./pages/LoginHistoryPage";
 import MonitoringPage from "./pages/MonitoringPage";
 import BillingPage from "./pages/BillingPage";
+import SmsPage from "./pages/SmsPage";
 import { Role } from "./features/auth/authApi";
 import { logout } from "./features/auth/authSlice";
 
@@ -35,6 +36,7 @@ const NAV_ITEMS = [
   { path: "/login-history", label: "История входов", icon: <span>🕐</span> },
   { path: "/monitoring", label: "Мониторинг", icon: <span>📡</span> },
   { path: "/billing", label: "Биллинг", icon: <span>💰</span> },
+  { path: "/sms", label: "SMS", icon: <span>💬</span> },
 ];
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -159,6 +161,7 @@ const Layout = () => {
             <Route path="login-history" element={<LoginHistoryPage />} />
             <Route path="monitoring" element={<MonitoringPage />} />
             <Route path="billing" element={<BillingPage />} />
+            <Route path="sms" element={<SmsPage />} />
             <Route
               path="*"
               element={

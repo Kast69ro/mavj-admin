@@ -5,32 +5,16 @@ import { fetchOperators } from "../features/operators/operators";
 import { OPERATOR_COLORS } from "../utils/operatorColors"; // поправь путь под свой проект
 import { useDispatch, useSelector } from 'react-redux';
 import { STATUS_CONFIG, STATUS_OPTIONS } from '../utils/statusColor';
-
-// --- статические справочники ---
-
+import { formatDate } from '../utils/utils';
 
 
-// --- утилиты ---
 
-const formatDate = (value) => {
-  if (!value) return '—';
-  const d = new Date(value);
-  return d.toLocaleString('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-};
 
 const formatMsisdn = (msisdn) => {
   if (!msisdn || msisdn.length < 12) return msisdn;
-  // 992 71 002 0008
   return `+${msisdn.slice(0, 3)} ${msisdn.slice(3, 5)} ${msisdn.slice(5, 8)} ${msisdn.slice(8)}`;
 };
 
-// --- маленькие компоненты ---
 
 const StatusBadge = ({ status }) => {
   const cfg = STATUS_CONFIG[status] ?? { label: status, bg: '#f1f5f9', text: '#475569', dot: '#94a3b8' };
@@ -58,12 +42,7 @@ const OperatorBadge = ({ code, operatorsByCode }) => {
   );
 };
 
-/**
- * Заголовок колонки с выпадающим списком-фильтром.
- * options: [{ value, label, color? }]
- * value: текущее выбранное значение
- * onChange: (value) => void
- */
+
 const FilterableHeader = ({ label, options, value, onChange }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -120,7 +99,6 @@ const FilterableHeader = ({ label, options, value, onChange }) => {
   );
 };
 
-// --- основной компонент ---
 
 const SubscribersPage = () => {
   const [searchInput, setSearchInput] = useState('');
@@ -134,7 +112,6 @@ const SubscribersPage = () => {
   const { subscribers, total, isLoading, error } = useSelector((state) => state.subscribers);
   const { info: operatorsInfo } = useSelector((state) => state.operators);
 
-  // code -> { name, ... } для быстрого поиска названия оператора
   const operatorsByCode = (operatorsInfo?.operators ?? []).reduce((acc, op) => {
     acc[op.code] = op;
     return acc;
@@ -167,7 +144,6 @@ const SubscribersPage = () => {
     );
   }, [dispatch, search, operatorFilter, statusFilter, page, limit]);
 
-  // debounce поиска
   useEffect(() => {
     const timer = setTimeout(() => {
       setPage(1);
@@ -176,7 +152,6 @@ const SubscribersPage = () => {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  // сброс на первую страницу при смене фильтров
   useEffect(() => {
     setPage(1);
   }, [operatorFilter, statusFilter]);
@@ -291,7 +266,6 @@ const SubscribersPage = () => {
           </table>
         </div>
 
-        {/* Пагинация */}
         {!isLoading && total > 0 && (
           <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100">
             <p className="text-xs text-gray-500">
