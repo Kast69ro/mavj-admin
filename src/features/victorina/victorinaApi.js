@@ -81,3 +81,16 @@ export const uploadExcel = createAsyncThunk(
     }
   },
 );
+
+export const deleteQuestions = createAsyncThunk(
+  "victorina/deleteQuestions",
+  async (_arg, { rejectWithValue, dispatch }) => {
+    try {
+      await axiosRequest.delete("/quiz/questions");
+      dispatch(fetchQuiz());
+      return true;
+    } catch (error) {
+      return rejectWithValue(error.response?.data);
+    }
+  },
+);

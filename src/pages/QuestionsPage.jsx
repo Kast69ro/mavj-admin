@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   createQuiz,
   deleteQuizQuestion,
+  deleteQuestions,
   fetchQuiz,
   toggleQuizStatus,
   updateQuiz,
@@ -33,7 +34,7 @@ import {
   Pagination,
   Switch,
 } from "@mui/material";
-import { Edit, Delete, Add, Upload } from "@mui/icons-material";
+import { Edit, Delete, Add, Upload, DeleteSweep } from "@mui/icons-material";
 
 const emptyForm = {
   question: "",
@@ -51,6 +52,7 @@ const QuestionsPage = () => {
   const [limit] = useState(20);
   const [open, setOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const [excelOpen, setExcelOpen] = useState(false);
   const [excelFile, setExcelFile] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
@@ -92,6 +94,11 @@ const QuestionsPage = () => {
     setDeleteOpen(false);
   };
 
+  const handleDeleteAll = async () => {
+    dispatch(deleteQuestions());
+    setDeleteAllOpen(false);
+  };
+
   const handleExcelUpload = () => {
     if (!excelFile) return;
     dispatch(uploadExcel(excelFile));
@@ -101,7 +108,6 @@ const QuestionsPage = () => {
 
   return (
     <Box>
-      {/* Шапка */}
       <Box
         sx={{
           display: "flex",
@@ -116,6 +122,15 @@ const QuestionsPage = () => {
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button
             variant="outlined"
+            color="error"
+            startIcon={<DeleteSweep />}
+            onClick={() => setDeleteAllOpen(true)}
+            disabled={!questions?.length}
+          >
+            Удалить все
+          </Button>
+          <Button
+            variant="outlined"
             startIcon={<Upload />}
             onClick={() => setExcelOpen(true)}
           >
@@ -127,7 +142,6 @@ const QuestionsPage = () => {
         </Box>
       </Box>
 
-      {/*  Таблица со скроллом */}
       <Paper
         variant="outlined"
         sx={{
@@ -137,7 +151,7 @@ const QuestionsPage = () => {
         }}
       >
         <TableContainer sx={{ maxHeight: 650, overflow: "auto" }}>
-          <Table stickyHeader size="small" sx={{ minWidth:1200 }}>
+          <Table stickyHeader size="small" sx={{ minWidth: 1200 }}>
             <TableHead>
               <TableRow>
                 {[
@@ -293,7 +307,6 @@ const QuestionsPage = () => {
           </Table>
         </TableContainer>
 
-        {/* Пагинация внутри карточки */}
         <Box
           sx={{
             display: "flex",
@@ -312,7 +325,6 @@ const QuestionsPage = () => {
         </Box>
       </Paper>
 
-      {/* Модалка добавить/редактировать */}
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
@@ -332,7 +344,6 @@ const QuestionsPage = () => {
               multiline
               rows={2}
             />
-            {/* ✅ Исправлено: option_1/2/3/4 */}
             {[1, 2, 3, 4].map((n) => (
               <TextField
                 key={n}
@@ -370,7 +381,7 @@ const QuestionsPage = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Модалка удаления */}
+      {/* Удаление одного вопроса */}
       <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)}>
         <DialogTitle>Удалить вопрос?</DialogTitle>
         <DialogContent>
@@ -384,7 +395,22 @@ const QuestionsPage = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Модалка Excel */}
+      <Dialog open={deleteAllOpen} onClose={() => setDeleteAllOpen(false)}>
+        <DialogTitle>Удалить все вопросы?</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Будут удалены <b>все {total ?? questions?.length ?? 0}</b> вопросов
+            викторины. Это действие нельзя отменить.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteAllOpen(false)}>Отмена</Button>
+          <Button variant="contained" color="error" onClick={handleDeleteAll}>
+            Удалить всё
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Dialog
         open={excelOpen}
         onClose={() => setExcelOpen(false)}
