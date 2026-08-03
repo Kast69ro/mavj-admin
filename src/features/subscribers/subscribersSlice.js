@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import {fetchSubscribers} from "./subscribers";
+import { fetchSubscribers, fetchSubscriberQuiz } from "./subscribers";
 
 
 
@@ -12,8 +12,19 @@ const subscribersSlice = createSlice({
     limit: 20,
     isLoading: false,
     error: null,
+
+    selectedSubscriber: {
+      data: null,
+      isLoading: false,
+      error: null,
+    },
   },
-  reducers: {},
+  reducers: {
+    clearSelectedSubscriber: (state) => {
+      state.selectedSubscriber.data = null;
+      state.selectedSubscriber.error = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchSubscribers.pending, (state) => {
@@ -30,8 +41,22 @@ const subscribersSlice = createSlice({
       .addCase(fetchSubscribers.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
+      })
+
+      .addCase(fetchSubscriberQuiz.pending, (state) => {
+        state.selectedSubscriber.isLoading = true;
+        state.selectedSubscriber.error = null;
+      })
+      .addCase(fetchSubscriberQuiz.fulfilled, (state, action) => {
+        state.selectedSubscriber.isLoading = false;
+        state.selectedSubscriber.data = action.payload;
+      })
+      .addCase(fetchSubscriberQuiz.rejected, (state, action) => {
+        state.selectedSubscriber.isLoading = false;
+        state.selectedSubscriber.error = action.payload;
       });
   },
 });
 
+export const { clearSelectedSubscriber } = subscribersSlice.actions;
 export default subscribersSlice.reducer;
