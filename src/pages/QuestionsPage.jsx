@@ -36,6 +36,11 @@ import {
 } from "@mui/material";
 import { Edit, Delete, Add, Upload, DeleteSweep } from "@mui/icons-material";
 
+const LANGUAGES = [
+  { value: "ru", label: "Русский" },
+  { value: "tj", label: "Тоҷикӣ" },
+];
+
 const emptyForm = {
   question: "",
   option_1: "",
@@ -43,6 +48,7 @@ const emptyForm = {
   option_3: "",
   option_4: "",
   correct_answer: "",
+  language: "ru",
 };
 
 const QuestionsPage = () => {
@@ -77,6 +83,7 @@ const QuestionsPage = () => {
       option_3: row.option_3,
       option_4: row.option_4,
       correct_answer: row.correct_answer,
+      language: row.language || "ru",
     });
     setSelectedId(row.id);
     setIsEdit(true);
@@ -243,7 +250,10 @@ const QuestionsPage = () => {
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={row.language}
+                        label={
+                          LANGUAGES.find((l) => l.value === row.language)
+                            ?.label || row.language
+                        }
                         size="small"
                         sx={{
                           background: "#fef3c7",
@@ -336,6 +346,22 @@ const QuestionsPage = () => {
         </DialogTitle>
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <FormControl fullWidth>
+              <InputLabel>Язык</InputLabel>
+              <Select
+                value={form.language}
+                label="Язык"
+                onChange={(e) =>
+                  setForm({ ...form, language: e.target.value })
+                }
+              >
+                {LANGUAGES.map((lang) => (
+                  <MenuItem key={lang.value} value={lang.value}>
+                    {lang.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <TextField
               label="Вопрос"
               value={form.question}

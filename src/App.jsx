@@ -11,6 +11,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { Home, Users, BarChart3, Upload, LogOut } from "lucide-react";
 
 import LoginPage from "./pages/LoginPage";
+import LotteryPage from "./pages/LotteryPage.jsx";
 import MainPage from "./pages/MainPage";
 import SubscribersPage from "./pages/SubscribersPage";
 import ReportsPage from "./pages/ReportsPage";
@@ -18,7 +19,6 @@ import QuestionsPage from "./pages/QuestionsPage";
 import WinnersPage from "./pages/WinnersPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import SettingsPage from "./pages/SettingsPage";
-import LoginHistoryPage from "./pages/LoginHistoryPage";
 import MonitoringPage from "./pages/MonitoringPage";
 import BillingPage from "./pages/BillingPage";
 import SmsPage from "./pages/SmsPage";
@@ -33,7 +33,6 @@ const NAV_ITEMS = [
   { path: "/lottery", label: "Лотерея", icon: <span>🎰</span> },
   { path: "/analytics", label: "Аналитика", icon: <BarChart3 size={18} /> },
   { path: "/settings", label: "Настройки", icon: <span>⚙️</span> },
-  { path: "/login-history", label: "История входов", icon: <span>🕐</span> },
   { path: "/monitoring", label: "Мониторинг", icon: <span>📡</span> },
   { path: "/billing", label: "Биллинг", icon: <span>💰</span> },
   { path: "/sms", label: "SMS", icon: <span>💬</span> },
@@ -158,10 +157,10 @@ const Layout = () => {
             <Route path="winners" element={<WinnersPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="settings" element={<SettingsPage />} />
-            <Route path="login-history" element={<LoginHistoryPage />} />
             <Route path="monitoring" element={<MonitoringPage />} />
             <Route path="billing" element={<BillingPage />} />
             <Route path="sms" element={<SmsPage />} />
+            <Route path="lottery" element={<LotteryPage />} />
             <Route
               path="*"
               element={
