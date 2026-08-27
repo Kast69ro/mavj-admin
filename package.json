@@ -4,12 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-  "dev": "vite",
-  "build": "vite build",
-  "build:admin": "cross-env VITE_BASE_PATH=/admin/ vite build --outDir dist-admin",
-  "preview": "vite preview"
-},
-
+    "dev": "vite",
+    "build": "vite build",
+    "build:admin": "cross-env VITE_BASE_PATH=/admin/ vite build --outDir dist-admin",
+    "preview": "vite preview"
+  },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
@@ -23,6 +22,7 @@
     "react-dom": "^19.1.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.13.1",
+    "recharts": "^3.10.1",
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {

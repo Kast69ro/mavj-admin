@@ -26,3 +26,8 @@ export const formatDate = (value) => {
     minute: '2-digit',
   });
 };
+
+export const LANGUAGES = [
+  { value: "ru", label: "Русский" },
+  { value: "tj", label: "Тоҷикӣ" },
+];

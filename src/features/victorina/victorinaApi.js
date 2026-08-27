@@ -94,3 +94,16 @@ export const deleteQuestions = createAsyncThunk(
     }
   },
 );
+
+
+export const fetchQuizStats = createAsyncThunk(
+  "victorina/fetchQuizStats",
+  async (_arg, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosRequest.get("/quiz/stats");
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data);
+    }
+  },
+);

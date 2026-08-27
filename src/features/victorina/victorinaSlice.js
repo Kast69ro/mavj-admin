@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchQuiz } from "./victorinaApi";
+import { fetchQuiz, fetchQuizStats } from "./victorinaApi";
 
 const victorinaSlice = createSlice({
   name: "victorina",
@@ -7,7 +7,10 @@ const victorinaSlice = createSlice({
     questions: [],
     isLoading: false,
     error: null,
-    total:null
+    total: null,
+    stats: null,
+    statsLoading: false,
+    statsError: null,
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -24,6 +27,18 @@ const victorinaSlice = createSlice({
       .addCase(fetchQuiz.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
+      })
+      .addCase(fetchQuizStats.pending, (state) => {
+        state.statsLoading = true;
+        state.statsError = null;
+      })
+      .addCase(fetchQuizStats.fulfilled, (state, action) => {
+        state.statsLoading = false;
+        state.stats = action.payload;
+      })
+      .addCase(fetchQuizStats.rejected, (state, action) => {
+        state.statsLoading = false;
+        state.statsError = action.payload;
       });
   },
 });

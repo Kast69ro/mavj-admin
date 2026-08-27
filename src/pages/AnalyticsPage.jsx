@@ -1,95 +1,238 @@
-import React from 'react';
-import { questionStats, conversionData, financialData } from '../data/mockData';
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Box, Paper, Typography, Chip, LinearProgress } from "@mui/material";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
+import {
+  People,
+  CheckCircle,
+  Cancel,
+  QuestionAnswer,
+  TaskAlt,
+  Send,
+} from "@mui/icons-material";
+import { fetchAnalytics } from "../features/analytics/analytics";
 
-const AnalyticsPage = () => (
-  <div className="space-y-6">
-    <h2 className="text-2xl font-bold text-gray-800">Расширенная аналитика</h2>
+const statCardStyle = {
+  flex: "1 1 200px",
+  borderRadius: 3,
+  border: "1px solid #e5e7f0",
+  p: 2.5,
+  display: "flex",
+  alignItems: "center",
+  gap: 1.5,
+};
 
-    {/* Conversion */}
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold mb-4">Конверсия абонентов</h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl">
-          <p className="text-sm text-gray-600">Всего посетителей</p>
-          <p className="text-3xl font-bold text-blue-600">{conversionData.totalVisitors.toLocaleString()}</p>
-        </div>
-        <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl">
-          <p className="text-sm text-gray-600">Подписались</p>
-          <p className="text-3xl font-bold text-emerald-600">{conversionData.subscribed.toLocaleString()}</p>
-          <p className="text-xs text-gray-500 mt-1">Конверсия: {conversionData.conversionRate}%</p>
-        </div>
-        <div className="bg-purple-50 border border-purple-200 p-4 rounded-xl">
-          <p className="text-sm text-gray-600">Удержание</p>
-          <p className="text-3xl font-bold text-purple-600">{conversionData.retentionRate}%</p>
-          <p className="text-xs text-gray-500 mt-1">Активных: {conversionData.active.toLocaleString()}</p>
-        </div>
-      </div>
-    </div>
-
-    {/* Financial */}
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold mb-4">Финансовая аналитика</h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl">
-          <p className="text-sm text-gray-600">Общая выручка</p>
-          <p className="text-3xl font-bold text-emerald-700">{financialData.totalRevenue.toLocaleString()} ₴</p>
-          <p className="text-xs text-emerald-600 mt-1">↑ +{financialData.monthlyGrowth}%</p>
-        </div>
-        <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl">
-          <p className="text-sm text-gray-600">Выдано призов</p>
-          <p className="text-3xl font-bold text-amber-700">{financialData.prizesIssued.toLocaleString()} ₴</p>
-        </div>
-        <div className="bg-purple-50 border border-purple-200 p-4 rounded-xl">
-          <p className="text-sm text-gray-600">Чистая прибыль</p>
-          <p className="text-3xl font-bold text-purple-700">{financialData.netProfit.toLocaleString()} ₴</p>
-        </div>
-      </div>
-    </div>
-
-    {/* Question stats */}
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold mb-4">Популярность и анализ вопросов</h3>
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-gray-50">
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Вопрос</th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Задавался</th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">% правильных</th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Ср. время</th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Статус</th>
-            </tr>
-          </thead>
-          <tbody>
-            {questionStats.map(q => (
-              <tr key={q.id} className="border-b border-gray-100 hover:bg-gray-50">
-                <td className="px-4 py-3 text-sm max-w-xs truncate">{q.question}</td>
-                <td className="px-4 py-3 text-center">
-                  <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">{q.timesAsked}</span>
-                </td>
-                <td className="px-4 py-3 text-center">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    q.correctRate >= 80 ? 'bg-emerald-100 text-emerald-800' :
-                    q.correctRate >= 60 ? 'bg-amber-100 text-amber-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
-                    {q.correctRate}%
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-center text-sm">{q.avgResponseTime}с</td>
-                <td className="px-4 py-3 text-center">
-                  {q.daysAgo >= 7
-                    ? <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs">Доступен</span>
-                    : <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-xs">Блок {7 - q.daysAgo} дн</span>
-                  }
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+const StatCard = ({ icon, label, value, color, bg }) => (
+  <Box sx={statCardStyle}>
+    <Box
+      sx={{
+        width: 44,
+        height: 44,
+        borderRadius: 2,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: bg,
+        color,
+        flexShrink: 0,
+      }}
+    >
+      {icon}
+    </Box>
+    <Box>
+      <Typography sx={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, color: "#6b7280" }}>
+        {label}
+      </Typography>
+      <Typography sx={{ fontSize: 22, fontWeight: 700, color: "#111827" }}>
+        {value.toLocaleString("ru-RU")}
+      </Typography>
+    </Box>
+  </Box>
 );
+
+const SectionPaper = ({ title, children }) => (
+  <Paper
+    variant="outlined"
+    sx={{ borderRadius: 3, border: "1px solid #e5e7f0", p: 3, flex: 1, minWidth: 320 }}
+  >
+    <Typography sx={{ fontSize: 14, fontWeight: 700, color: "#111827", mb: 2 }}>
+      {title}
+    </Typography>
+    {children}
+  </Paper>
+);
+
+const AnalyticsPage = () => {
+  const dispatch = useDispatch();
+  const { data, isLoading } = useSelector((state) => state.analytics);
+
+  useEffect(() => {
+    dispatch(fetchAnalytics());
+  }, [dispatch]);
+
+  if (isLoading || !data) return null;
+
+  const { overview, by_operator, subscriptions_by_day, activity_by_action } = data;
+
+  const maxOperatorTotal = Math.max(...by_operator.map((o) => o.total));
+  const maxActionTotal = Math.max(...activity_by_action.map((a) => a.total));
+  const sortedActions = [...activity_by_action].sort((a, b) => b.total - a.total);
+
+  return (
+    <Box>
+      <Typography variant="h5" fontWeight={700} sx={{ mb: 3 }}>
+        Аналитика
+      </Typography>
+
+      {/* Overview */}
+      <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
+        <StatCard
+          icon={<People fontSize="small" />}
+          label="Всего подписчиков"
+          value={overview.total_subscribers}
+          color="#6366f1"
+          bg="#ede9fe"
+        />
+        <StatCard
+          icon={<CheckCircle fontSize="small" />}
+          label="Активные подписчики"
+          value={overview.active_subscribers}
+          color="#16a34a"
+          bg="#dcfce7"
+        />
+        <StatCard
+          icon={<Cancel fontSize="small" />}
+          label="Неактивные подписчики"
+          value={overview.inactive_subscribers}
+          color="#dc2626"
+          bg="#fee2e2"
+        />
+        <StatCard
+          icon={<QuestionAnswer fontSize="small" />}
+          label="Всего вопросов"
+          value={overview.total_questions}
+          color="#92400e"
+          bg="#fef3c7"
+        />
+        <StatCard
+          icon={<TaskAlt fontSize="small" />}
+          label="Активные вопросы"
+          value={overview.active_questions}
+          color="#0284c7"
+          bg="#e0f2fe"
+        />
+        <StatCard
+          icon={<Send fontSize="small" />}
+          label="Всего запросов"
+          value={overview.total_requests}
+          color="#6b7280"
+          bg="#f3f4f6"
+        />
+      </Box>
+
+      <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 2 }}>
+        {/* Subscriptions by day */}
+        <SectionPaper title="Подписки по дням">
+          <ResponsiveContainer width="100%" height={260}>
+            <AreaChart data={subscriptions_by_day}>
+              <defs>
+                <linearGradient id="colorSub" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+              <XAxis
+                dataKey="date"
+                tickFormatter={(d) => d.slice(5)}
+                tick={{ fontSize: 11, fill: "#9ca3af" }}
+                axisLine={{ stroke: "#e5e7f0" }}
+              />
+              <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={{ stroke: "#e5e7f0" }} />
+              <Tooltip
+                contentStyle={{ borderRadius: 8, border: "1px solid #e5e7f0", fontSize: 12 }}
+                labelFormatter={(d) => `Дата: ${d}`}
+                formatter={(value) => [value, "Подписок"]}
+              />
+              <Area
+                type="monotone"
+                dataKey="subscriptions"
+                stroke="#6366f1"
+                strokeWidth={2}
+                fill="url(#colorSub)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </SectionPaper>
+
+        {/* By operator */}
+        <SectionPaper title="По операторам">
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+            {by_operator.map((op) => (
+              <Box key={op.operator}>
+                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                  <Chip
+                    label={op.operator}
+                    size="small"
+                    sx={{ background: "#fef3c7", color: "#92400e", fontWeight: 600, fontSize: 11, textTransform: "capitalize" }}
+                  />
+                  <Typography sx={{ fontSize: 13, color: "#6b7280" }}>
+                    <b style={{ color: "#111827" }}>{op.active}</b> активных из {op.total}
+                  </Typography>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={(op.total / maxOperatorTotal) * 100}
+                  sx={{
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: "#f3f4f6",
+                    "& .MuiLinearProgress-bar": { backgroundColor: "#6366f1", borderRadius: 4 },
+                  }}
+                />
+              </Box>
+            ))}
+          </Box>
+        </SectionPaper>
+      </Box>
+
+      {/* Activity by action */}
+      <SectionPaper title="Активность по действиям">
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          {sortedActions.map((action) => (
+            <Box key={action.action} sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Typography sx={{ fontSize: 13, color: "#6b7280", width: 140, flexShrink: 0 }}>
+                {action.action}
+              </Typography>
+              <Box sx={{ flex: 1 }}>
+                <LinearProgress
+                  variant="determinate"
+                  value={(action.total / maxActionTotal) * 100}
+                  sx={{
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: "#f3f4f6",
+                    "& .MuiLinearProgress-bar": { backgroundColor: "#0ea5e9", borderRadius: 4 },
+                  }}
+                />
+              </Box>
+              <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#111827", width: 50, textAlign: "right" }}>
+                {action.total}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      </SectionPaper>
+    </Box>
+  );
+};
 
 export default AnalyticsPage;

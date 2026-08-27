@@ -8,6 +8,7 @@ import {
   toggleQuizStatus,
   updateQuiz,
   uploadExcel,
+  fetchQuizStats,
 } from "../features/victorina/victorinaApi";
 import {
   Table,
@@ -35,11 +36,7 @@ import {
   Switch,
 } from "@mui/material";
 import { Edit, Delete, Add, Upload, DeleteSweep } from "@mui/icons-material";
-
-const LANGUAGES = [
-  { value: "ru", label: "Русский" },
-  { value: "tj", label: "Тоҷикӣ" },
-];
+import { LANGUAGES } from "../utils/utils";
 
 const emptyForm = {
   question: "",
@@ -52,7 +49,7 @@ const emptyForm = {
 };
 
 const QuestionsPage = () => {
-  const { questions, total } = useSelector((state) => state.victorina);
+  const { questions, total, stats } = useSelector((state) => state.victorina);
   const dispatch = useDispatch();
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
@@ -67,7 +64,8 @@ const QuestionsPage = () => {
 
   useEffect(() => {
     dispatch(fetchQuiz({ page, limit }));
-  }, [dispatch, page]);
+    dispatch(fetchQuizStats());
+  }, [dispatch, page, stats]);
 
   const handleAdd = () => {
     setForm(emptyForm);
@@ -115,38 +113,130 @@ const QuestionsPage = () => {
 
   return (
     <Box>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
-        <Typography variant="h5" fontWeight={700}>
-          Вопросы
-        </Typography>
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            variant="outlined"
-            color="error"
-            startIcon={<DeleteSweep />}
-            onClick={() => setDeleteAllOpen(true)}
-            disabled={!questions?.length}
-          >
-            Удалить все
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<Upload />}
-            onClick={() => setExcelOpen(true)}
-          >
-            Загрузить Excel
-          </Button>
-          <Button variant="contained" startIcon={<Add />} onClick={handleAdd}>
-            Добавить
-          </Button>
+      <Box sx={{ mb: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: stats ? 2.5 : 0,
+          }}
+        >
+          <Typography variant="h5" fontWeight={700}>
+            Вопросы
+          </Typography>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteSweep />}
+              onClick={() => setDeleteAllOpen(true)}
+              disabled={!questions?.length}
+            >
+              Удалить все
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<Upload />}
+              onClick={() => setExcelOpen(true)}
+            >
+              Загрузить Excel
+            </Button>
+            <Button variant="contained" startIcon={<Add />} onClick={handleAdd}>
+              Добавить
+            </Button>
+          </Box>
         </Box>
+
+        {stats && (
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+            <Box
+              sx={{
+                flex: "1 1 180px",
+                borderRadius: 3,
+                border: "1px solid #e5e7f0",
+                p: 2,
+                background: "#f8f9fc",
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.5,
+                  color: "#6b7280",
+                }}
+              >
+                Всего вопросов
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: 24,
+                  fontWeight: 700,
+                  color: "#111827",
+                  mt: 0.5,
+                }}
+              >
+                {stats.total.toLocaleString("ru-RU")}
+              </Typography>
+            </Box>
+
+            {Object.entries(stats.by_language).map(([lang, count]) => (
+              <Box
+                key={lang}
+                sx={{
+                  flex: "1 1 180px",
+                  borderRadius: 3,
+                  border: "1px solid #e5e7f0",
+                  p: 2,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 0.5,
+                  }}
+                >
+                  <Chip
+                    label={lang}
+                    size="small"
+                    sx={{
+                      background: "#fef3c7",
+                      color: "#92400e",
+                      fontWeight: 600,
+                      fontSize: 11,
+                      height: 20,
+                    }}
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: 0.5,
+                      color: "#6b7280",
+                    }}
+                  >
+                    вопросов
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
+                  <Typography
+                    sx={{ fontSize: 24, fontWeight: 700, color: "#6366f1" }}
+                  >
+                    {count.toLocaleString("ru-RU")}
+                  </Typography>
+                  <Typography sx={{ fontSize: 12, color: "#9ca3af" }}>
+                    ({((count / stats.total) * 100).toFixed(1)}%)
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        )}
       </Box>
 
       <Paper
@@ -351,9 +441,7 @@ const QuestionsPage = () => {
               <Select
                 value={form.language}
                 label="Язык"
-                onChange={(e) =>
-                  setForm({ ...form, language: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, language: e.target.value })}
               >
                 {LANGUAGES.map((lang) => (
                   <MenuItem key={lang.value} value={lang.value}>
