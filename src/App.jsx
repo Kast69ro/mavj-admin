@@ -32,10 +32,10 @@ const NAV_ITEMS = [
   { path: "/questions", label: "Вопросы", icon: <Upload size={18} /> },
   { path: "/lottery", label: "Лотерея", icon: <span>🎰</span> },
   { path: "/analytics", label: "Аналитика", icon: <BarChart3 size={18} /> },
-  { path: "/settings", label: "Настройки", icon: <span>⚙️</span> },
   { path: "/monitoring", label: "Мониторинг", icon: <span>📡</span> },
   { path: "/billing", label: "Биллинг", icon: <span>💰</span> },
   { path: "/sms", label: "SMS", icon: <span>💬</span> },
+  { path: "/ussd", label: "USSD", icon: <span>💬</span> },
 ];
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -97,7 +97,22 @@ const Sidebar = ({ isOpen, onClose }) => {
         ))}
       </nav>
 
-      <div className="px-3 pb-5 pt-2 border-t border-slate-700">
+      <div className="px-3 pb-5 pt-2 border-t border-slate-700 space-y-0.5">
+        <NavLink
+          to="/settings"
+          onClick={onClose}
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition ${
+              isActive
+                ? "bg-white text-slate-900 font-semibold shadow-sm"
+                : "text-slate-300 hover:bg-slate-800 hover:text-white"
+            }`
+          }
+        >
+          <span>⚙️</span>
+          <span className="flex-1">Настройки</span>
+        </NavLink>
+
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-red-600 hover:text-white transition text-sm"
@@ -160,6 +175,7 @@ const Layout = () => {
             <Route path="monitoring" element={<MonitoringPage />} />
             <Route path="billing" element={<BillingPage />} />
             <Route path="sms" element={<SmsPage />} />
+            <Route path="ussd" element={<SmsPage />} />
             <Route path="lottery" element={<LotteryPage />} />
             <Route
               path="*"

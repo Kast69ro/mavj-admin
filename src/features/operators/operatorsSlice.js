@@ -4,7 +4,7 @@ import { fetchOperators } from "./operators";
 const operatorsSlice = createSlice({
   name: "operators",
   initialState: {
-    info: null,
+    info: [],
     isLoading: false,
     error: null,
   },
@@ -17,7 +17,7 @@ const operatorsSlice = createSlice({
       })
       .addCase(fetchOperators.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.info = action.payload;
+        state.info = action.payload?.operators || [];
       })
       .addCase(fetchOperators.rejected, (state, action) => {
         state.isLoading = false;

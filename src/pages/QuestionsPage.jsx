@@ -34,8 +34,16 @@ import {
   InputLabel,
   Pagination,
   Switch,
+  InputAdornment,
 } from "@mui/material";
-import { Edit, Delete, Add, Upload, DeleteSweep } from "@mui/icons-material";
+import {
+  Edit,
+  Delete,
+  Add,
+  Upload,
+  DeleteSweep,
+  Search,
+} from "@mui/icons-material";
 import { LANGUAGES } from "../utils/utils";
 
 const emptyForm = {
@@ -61,6 +69,8 @@ const QuestionsPage = () => {
   const [selectedId, setSelectedId] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [isEdit, setIsEdit] = useState(false);
+
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     dispatch(fetchQuiz({ page, limit }));
@@ -120,11 +130,29 @@ const QuestionsPage = () => {
             justifyContent: "space-between",
             alignItems: "center",
             mb: stats ? 2.5 : 0,
+            gap: 2,
+            flexWrap: "wrap",
           }}
         >
           <Typography variant="h5" fontWeight={700}>
             Вопросы
           </Typography>
+
+          <TextField
+            placeholder="Поиск по тексту вопроса..."
+            size="small"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            sx={{ minWidth: 260, flex: "1 1 260px", maxWidth: 420 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search fontSize="small" sx={{ color: "#9ca3af" }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+
           <Box sx={{ display: "flex", gap: 1 }}>
             <Button
               variant="outlined"

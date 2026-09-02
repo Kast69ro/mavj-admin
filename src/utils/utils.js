@@ -31,3 +31,47 @@ export const LANGUAGES = [
   { value: "ru", label: "Русский" },
   { value: "tj", label: "Тоҷикӣ" },
 ];
+
+export const toISO = (d) => d.toISOString().slice(0, 10);
+
+export const daysBetween = (from, to) =>
+  Math.round((new Date(to) - new Date(from)) / 86400000) + 1;
+
+export const getPresetRange = (presetId) => {
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = today.getMonth();
+
+  switch (presetId) {
+    case "today":
+      return { from: toISO(today), to: toISO(today) };
+    case "yesterday": {
+      const d = new Date(today);
+      d.setDate(d.getDate() - 1);
+      return { from: toISO(d), to: toISO(d) };
+    }
+    case "7d": {
+      const d = new Date(today);
+      d.setDate(d.getDate() - 6);
+      return { from: toISO(d), to: toISO(today) };
+    }
+    case "30d": {
+      const d = new Date(today);
+      d.setDate(d.getDate() - 29);
+      return { from: toISO(d), to: toISO(today) };
+    }
+    case "month":
+      return { from: toISO(new Date(y, m, 1)), to: toISO(today) };
+    case "prevMonth":
+      return {
+        from: toISO(new Date(y, m - 1, 1)),
+        to: toISO(new Date(y, m, 0)),
+      };
+    default:
+      return { from: toISO(today), to: toISO(today) };
+  }
+};
+
+export const nf = (v) => (v == null ? "—" : Number(v).toLocaleString("ru-RU"));
+export const rf = (v) => (v == null ? "—" : String(v).replace(".", ",") + "%");
+export const pct = (a, b) => (b ? ((a / b) * 100).toFixed(1) : "0.0");

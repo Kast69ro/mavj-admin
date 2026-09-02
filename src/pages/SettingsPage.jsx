@@ -1,144 +1,332 @@
-import React, { useState } from 'react';
-import { initialSystemSettings } from '../data/mockData';
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchPeriods,
+  createPeriod,
+  deletePeriod,
+  togglePeriodStatus,
+  extendPeriod,
+} from "../features/poriods/periodsApi";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Button,
+  IconButton,
+  Chip,
+  Typography,
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Switch,
+} from "@mui/material";
+import { Delete, Add, EventRepeat } from "@mui/icons-material";
 
-const SettingsPage = () => {
-  const [settings, setSettings] = useState(initialSystemSettings);
+const emptyForm = {
+  name: "",
+  start_date: "",
+  end_date: "",
+  prize_budget: "",
+};
 
-  const toggleOperator = (operator) => {
-    const newOps = { ...settings.operators };
-    newOps[operator] = { ...newOps[operator], active: !newOps[operator].active };
-    setSettings({ ...settings, operators: newOps });
+const PeriodsPage = () => {
+  const { periods } = useSelector((state) => state.periods);
+  const dispatch = useDispatch();
+
+  const [open, setOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [extendOpen, setExtendOpen] = useState(false);
+
+  const [selectedId, setSelectedId] = useState(null);
+  const [extendId, setExtendId] = useState(null);
+  const [newEndDate, setNewEndDate] = useState("");
+
+  const [form, setForm] = useState(emptyForm);
+
+  useEffect(() => {
+    dispatch(fetchPeriods());
+  }, [dispatch]);
+
+  const handleAdd = () => {
+    setForm(emptyForm);
+    setOpen(true);
   };
 
+  const handleSave = () => {
+    dispatch(
+      createPeriod({
+        name: form.name,
+        start_date: form.start_date,
+        end_date: form.end_date,
+        prize_budget: form.prize_budget ? Number(form.prize_budget) : null,
+      })
+    );
+    setOpen(false);
+  };
+
+  const handleDelete = () => {
+    dispatch(deletePeriod(selectedId));
+    setDeleteOpen(false);
+  };
+
+  const handleToggle = (row) => {
+    dispatch(togglePeriodStatus({ id: row.id, is_active: !row.is_active }));
+  };
+
+  const handleOpenExtend = (row) => {
+    setExtendId(row.id);
+    setNewEndDate(row.end_date);
+    setExtendOpen(true);
+  };
+
+  const handleExtend = () => {
+    dispatch(extendPeriod({ id: extendId, end_date: newEndDate }));
+    setExtendOpen(false);
+  };
+
+  const formatDate = (d) =>
+    d ? new Date(d).toLocaleDateString("ru-RU") : "—";
+
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">Настройки системы</h2>
+    <Box>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 2.5,
+        }}
+      >
+        <Typography variant="h5" fontWeight={700}>
+          Периоды викторины
+        </Typography>
+        <Button variant="contained" startIcon={<Add />} onClick={handleAdd}>
+          Добавить период
+        </Button>
+      </Box>
 
-      {/* Quiz params */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold mb-4">Параметры викторины</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Статус викторины</label>
-            <button
-              onClick={() => setSettings({ ...settings, quiz_active: !settings.quiz_active })}
-              className={`px-4 py-2 rounded-lg font-medium text-sm ${settings.quiz_active ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'}`}
-            >
-              {settings.quiz_active ? 'Активна' : 'Остановлена'}
-            </button>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Баллы за вопрос</label>
-            <input
-              type="number"
-              value={settings.points_per_question}
-              onChange={e => setSettings({ ...settings, points_per_question: Number(e.target.value) })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+      <Paper
+        variant="outlined"
+        sx={{ borderRadius: 3, overflow: "hidden", border: "1px solid #e5e7f0" }}
+      >
+        <TableContainer sx={{ maxHeight: 650, overflow: "auto" }}>
+          <Table stickyHeader size="small">
+            <TableHead>
+              <TableRow>
+                {[
+                  "#",
+                  "Название",
+                  "Начало",
+                  "Окончание",
+                  "Бюджет",
+                  "Создан",
+                  "Статус",
+                  "Действия",
+                ].map((h) => (
+                  <TableCell
+                    key={h}
+                    align={h === "Действия" ? "right" : "left"}
+                    sx={{
+                      backgroundColor: "#f8f9fc",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: 0.5,
+                      color: "#6b7280",
+                      whiteSpace: "nowrap",
+                      borderBottom: "1px solid #e5e7f0",
+                    }}
+                  >
+                    {h}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {Array.isArray(periods) &&
+                periods.map((row) => (
+                  <TableRow key={row.id} hover sx={{ "&:last-child td": { border: 0 } }}>
+                    <TableCell sx={{ color: "#9ca3af", fontSize: 12, fontWeight: 600 }}>
+                      {row.id}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 500, color: "#111827" }}>
+                      {row.name}
+                    </TableCell>
+                    <TableCell sx={{ color: "#6b7280", fontSize: 13 }}>
+                      {formatDate(row.start_date)}
+                    </TableCell>
+                    <TableCell sx={{ color: "#6b7280", fontSize: 13 }}>
+                      {formatDate(row.end_date)}
+                    </TableCell>
+                    <TableCell sx={{ color: "#6b7280", fontSize: 13 }}>
+                      {row.prize_budget != null
+                        ? row.prize_budget.toLocaleString("ru-RU")
+                        : "—"}
+                    </TableCell>
+                    <TableCell sx={{ color: "#9ca3af", fontSize: 12 }}>
+                      {formatDate(row.created_at)}
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={row.is_active ? "Активен" : "Неактивен"}
+                        size="small"
+                        color={row.is_active ? "success" : "default"}
+                      />
+                    </TableCell>
+                    <TableCell align="right">
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.5,
+                          justifyContent: "flex-end",
+                        }}
+                      >
+                        <Switch
+                          checked={row.is_active}
+                          size="small"
+                          color="success"
+                          onChange={() => handleToggle(row)}
+                        />
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => handleOpenExtend(row)}
+                        >
+                          <EventRepeat fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => {
+                            setSelectedId(row.id);
+                            setDeleteOpen(true);
+                          }}
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
+
+      {/* Диалог добавления периода */}
+      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Добавить период</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <TextField
+              label="Название"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              fullWidth
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Макс. вопросов в день</label>
-            <input
-              type="number"
-              value={settings.max_questions_per_day}
-              onChange={e => setSettings({ ...settings, max_questions_per_day: Number(e.target.value) })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Стоимость подписки</label>
-            <input
-              type="number"
-              step="0.01"
-              value={settings.subscription_cost}
-              onChange={e => setSettings({ ...settings, subscription_cost: Number(e.target.value) })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            />
-          </div>
-        </div>
-      </div>
 
-      {/* Prizes */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold mb-4">Призы за места (викторина)</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[['prize_first', '🥇 1 место'], ['prize_second', '🥈 2 место'], ['prize_third', '🥉 3 место']].map(([key, label]) => (
-            <div key={key}>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
-              <input
-                type="number"
-                value={settings[key]}
-                onChange={e => setSettings({ ...settings, [key]: Number(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* SMS templates */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold mb-4">Шаблоны SMS сообщений</h3>
-        <div className="space-y-4">
-          {[
-            ['sms_question_template', 'Шаблон вопроса', 3],
-            ['sms_correct_template', 'Шаблон правильного ответа', 2],
-            ['sms_wrong_template', 'Шаблон неправильного ответа', 2],
-          ].map(([key, label, rows]) => (
-            <div key={key}>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
-              <textarea
-                value={settings[key]}
-                onChange={e => setSettings({ ...settings, [key]: e.target.value })}
-                rows={rows}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm"
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Operators */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold mb-4">Управление операторами</h3>
-        <div className="space-y-3">
-          {Object.entries(settings.operators).map(([operator, config]) => (
-            <div key={operator} className="flex items-center justify-between p-4 border border-gray-200 rounded-xl">
-              <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full ${config.active ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                <div>
-                  <p className="font-semibold text-sm">{operator}</p>
-                  <p className="text-xs text-gray-500">Код: {config.shortcode}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => toggleOperator(operator)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
-                  config.active
-                    ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                    : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                }`}
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ mb: 0.5, color: "#6b7280", fontWeight: 500 }}
               >
-                {config.active ? 'Отключить' : 'Включить'}
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
+                Дата начала
+              </Typography>
+              <TextField
+                type="date"
+                value={form.start_date}
+                onChange={(e) => setForm({ ...form, start_date: e.target.value })}
+                fullWidth
+              />
+            </Box>
 
-      <div className="flex justify-end gap-3">
-        <button className="px-5 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium">
-          Отмена
-        </button>
-        <button
-          onClick={() => alert('Настройки сохранены!')}
-          className="px-5 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-medium"
-        >
-          Сохранить изменения
-        </button>
-      </div>
-    </div>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ mb: 0.5, color: "#6b7280", fontWeight: 500 }}
+              >
+                Дата окончания
+              </Typography>
+              <TextField
+                type="date"
+                value={form.end_date}
+                onChange={(e) => setForm({ ...form, end_date: e.target.value })}
+                fullWidth
+              />
+            </Box>
+
+            <TextField
+              label="Призовой бюджет"
+              type="number"
+              value={form.prize_budget}
+              onChange={(e) => setForm({ ...form, prize_budget: e.target.value })}
+              fullWidth
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>Отмена</Button>
+          <Button variant="contained" onClick={handleSave}>
+            Добавить
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Диалог продления периода */}
+      <Dialog
+        open={extendOpen}
+        onClose={() => setExtendOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Продлить период</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 1 }}>
+            <Typography
+              variant="body2"
+              sx={{ mb: 0.5, color: "#6b7280", fontWeight: 500 }}
+            >
+              Новая дата окончания
+            </Typography>
+            <TextField
+              type="date"
+              value={newEndDate}
+              onChange={(e) => setNewEndDate(e.target.value)}
+              fullWidth
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setExtendOpen(false)}>Отмена</Button>
+          <Button variant="contained" onClick={handleExtend}>
+            Продлить
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Диалог удаления */}
+      <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)}>
+        <DialogTitle>Удалить период?</DialogTitle>
+        <DialogContent>
+          <Typography>Это действие нельзя отменить.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteOpen(false)}>Отмена</Button>
+          <Button variant="contained" color="error" onClick={handleDelete}>
+            Удалить
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
 
-export default SettingsPage;
+export default PeriodsPage;
