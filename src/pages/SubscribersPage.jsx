@@ -138,14 +138,14 @@ const SubscribersPage = () => {
   );
   const { info: operatorsInfo } = useSelector((state) => state.operators);
 
-  const operatorsByCode = (operatorsInfo?.operators ?? []).reduce((acc, op) => {
+  const operatorsByCode = (operatorsInfo ?? []).reduce((acc, op) => {
     acc[op.code] = op;
     return acc;
   }, {});
 
   const operatorOptions = [
     { value: "", label: "Все операторы" },
-    ...(operatorsInfo?.operators ?? []).map((op) => ({
+    ...(operatorsInfo ?? []).map((op) => ({
       value: op.code,
       label: op.name,
       color: (OPERATOR_COLORS[op.code] ?? OPERATOR_COLORS.default).bg,
@@ -153,7 +153,7 @@ const SubscribersPage = () => {
   ];
 
   useEffect(() => {
-    if (!operatorsInfo) {
+    if (operatorsInfo.length === 0) {
       dispatch(fetchOperators());
     }
   }, [dispatch, operatorsInfo]);
