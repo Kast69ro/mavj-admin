@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { operators, subscribers } from "../data/mockData";
+import {  subscribers } from "../data/mockData";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchOperators } from "../features/operators/operators";
 import { OPERATOR_COLORS } from "../utils/operatorColors";
@@ -19,7 +19,7 @@ const MainPage = ({ onNavigate }) => {
       <h2 className="text-2xl font-bold text-gray-800">Главная</h2>
       {/* Operator selector */}
       <div className="grid grid-cols-6 gap-3">
-        {info?.operators?.map((op) => {
+        {info?.map((op) => {
           const colors = OPERATOR_COLORS[op.code] ?? {
             bg: "#9ca3af",
             active: "#6b7280",
