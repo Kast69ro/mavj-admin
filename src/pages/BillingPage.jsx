@@ -1,59 +1,157 @@
-import React from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { axiosRequest } from '../utils/axiosInstance';
 
-const BillingPage = () => (
-  <div className="space-y-6">
-    <h2 className="text-2xl font-bold text-gray-800">Биллинг и финансы</h2>
+const OPERATORS = [
+  { value: '', label: 'Все операторы' },
+  { value: 'babilon', label: 'Babilon' },
+  { value: 'megafon', label: 'MegaFon' },
+];
 
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      {[
-        { label: 'Выручка (месяц)', value: '412,250 ₴', sub: '↑ +15.8%', from: 'emerald' },
-        { label: 'Расходы SMS', value: '125,000 ₴', from: 'blue' },
-        { label: 'Призы', value: '45,000 ₴', from: 'amber' },
-        { label: 'Чистая прибыль', value: '242,250 ₴', sub: 'Рентабельность: 58.8%', from: 'purple' },
-      ].map(({ label, value, sub, from }) => (
-        <div key={label} className={`bg-gradient-to-br from-${from}-500 to-${from}-600 rounded-xl shadow-lg p-5 text-white`}>
-          <p className="text-sm opacity-90">{label}</p>
-          <p className="text-3xl font-bold">{value}</p>
-          {sub && <p className="text-xs mt-1 opacity-75">{sub}</p>}
-        </div>
-      ))}
-    </div>
+const todayISO = () => new Date().toISOString().slice(0, 10);
+const monthStartISO = () => {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+};
 
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold mb-4">Стоимость SMS по операторам</h3>
-      <table className="w-full">
-        <thead>
-          <tr className="bg-gray-50">
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Оператор</th>
-            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Отправлено</th>
-            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Тариф</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Стоимость</th>
-          </tr>
-        </thead>
-        <tbody>
-          {[
-            { op: 'Tcell', sent: '45,230', rate: '0.10 ₴', cost: '4,523 ₴' },
-            { op: 'Мегафон', sent: '38,150', rate: '0.09 ₴', cost: '3,434 ₴' },
-            { op: 'Babilon', sent: '28,920', rate: '0.11 ₴', cost: '3,181 ₴' },
-            { op: 'Zet-Mobile', sent: '12,500', rate: '0.10 ₴', cost: '1,250 ₴' },
-          ].map(({ op, sent, rate, cost }) => (
-            <tr key={op} className="border-b border-gray-100">
-              <td className="px-4 py-3 text-sm font-medium">{op}</td>
-              <td className="px-4 py-3 text-center text-sm">{sent}</td>
-              <td className="px-4 py-3 text-center text-sm">{rate}</td>
-              <td className="px-4 py-3 text-right font-semibold text-sm">{cost}</td>
-            </tr>
-          ))}
-          <tr className="bg-gray-50 font-bold">
-            <td className="px-4 py-3 text-sm">Итого</td>
-            <td className="px-4 py-3 text-center text-sm">124,800</td>
-            <td />
-            <td className="px-4 py-3 text-right text-sm">12,388 ₴</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+const nf = (n) => (n ?? 0).toLocaleString('ru-RU');
+const money = (n) => `${(n ?? 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TJS`;
+
+const StatCard = ({ label, value, from = 'blue' }) => (
+  <div className={`bg-gradient-to-br from-${from}-500 to-${from}-600 rounded-xl shadow-lg p-5 text-white`}>
+    <p className="text-sm opacity-90">{label}</p>
+    <p className="text-3xl font-bold">{value}</p>
   </div>
 );
+
+const BillingPage = () => {
+  const [dateFrom, setDateFrom] = useState(monthStartISO());
+  const [dateTo, setDateTo] = useState(todayISO());
+  const [operator, setOperator] = useState('');
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data } = await axiosRequest.get('/billing/daily', {
+        params: { date_from: dateFrom, date_to: dateTo, operator: operator || undefined },
+      });
+      setData(data);
+    } catch (e) {
+      setError(e.response?.data?.detail || 'Не удалось загрузить биллинг');
+    } finally {
+      setLoading(false);
+    }
+  }, [dateFrom, dateTo, operator]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-800">Биллинг</h2>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Дата от</label>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Дата до</label>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Оператор</label>
+            <select
+              value={operator}
+              onChange={(e) => setOperator(e.target.value)}
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+            >
+              {OPERATORS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+          <button
+            onClick={load}
+            className="px-4 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+          >
+            Обновить
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">{error}</div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <StatCard label="Основные подписки" value={money(data?.totals?.subscription_amount)} from="emerald" />
+        <StatCard label="Доп-пакеты" value={money(data?.totals?.extra_amount)} from="amber" />
+        <StatCard label="Всего заработано" value={money(data?.totals?.total_amount)} from="indigo" />
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-gray-50">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Дата</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Основных списаний</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Сумма, TJS</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Доп-пакетов</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Сумма, TJS</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Итого, TJS</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(!data || data.days.length === 0) && (
+              <tr>
+                <td colSpan={6} className="px-4 py-6 text-center text-sm text-gray-400">
+                  {loading ? 'Загрузка…' : 'Нет данных за выбранный период'}
+                </td>
+              </tr>
+            )}
+            {data?.days?.map((d) => (
+              <tr key={d.date} className="border-b border-gray-100">
+                <td className="px-4 py-3 text-sm font-medium">{d.date}</td>
+                <td className="px-4 py-3 text-sm text-right">{nf(d.subscription_count)}</td>
+                <td className="px-4 py-3 text-sm text-right">{d.subscription_amount.toFixed(2)}</td>
+                <td className="px-4 py-3 text-sm text-right">{nf(d.extra_count)}</td>
+                <td className="px-4 py-3 text-sm text-right">{d.extra_amount.toFixed(2)}</td>
+                <td className="px-4 py-3 text-sm text-right font-semibold">{d.total_amount.toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+          {data?.days?.length > 0 && (
+            <tfoot>
+              <tr className="bg-gray-50 font-semibold">
+                <td className="px-4 py-3 text-sm">Итого за период</td>
+                <td className="px-4 py-3 text-sm text-right">{nf(data.totals.subscription_count)}</td>
+                <td className="px-4 py-3 text-sm text-right">{data.totals.subscription_amount.toFixed(2)}</td>
+                <td className="px-4 py-3 text-sm text-right">{nf(data.totals.extra_count)}</td>
+                <td className="px-4 py-3 text-sm text-right">{data.totals.extra_amount.toFixed(2)}</td>
+                <td className="px-4 py-3 text-sm text-right">{data.totals.total_amount.toFixed(2)}</td>
+              </tr>
+            </tfoot>
+          )}
+        </table>
+      </div>
+    </div>
+  );
+};
 
 export default BillingPage;
