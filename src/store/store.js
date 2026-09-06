@@ -5,7 +5,8 @@ import victorinaSlice from "../features/victorina/victorinaSlice";
 import subscribersSlice from "../features/subscribers/subscribersSlice";
 import smsSlice from "../features/SMS/sendSMSSlice";
 import analyticsSlice from "../features/analytics/analyticsSlice";
-import periodsSlice from "../features/poriods/periodsSlice"; // Импортируем редьюсер для управления периодами
+import periodsSlice from "../features/poriods/periodsSlice"; 
+import billingSlice from "../features/biling/bilingSlice"; 
 
 
 export const store = configureStore({
@@ -16,7 +17,7 @@ export const store = configureStore({
     subscribers:subscribersSlice,
     sms:smsSlice, 
     analytics:analyticsSlice,
-    periods: periodsSlice, // Добавляем редьюсер для управления периодами
-    // Здесь можно добавить редьюсеры для управления состоянием приложения
+    periods: periodsSlice,
+    billing: billingSlice,
   },
 });

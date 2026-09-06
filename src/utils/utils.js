@@ -75,3 +75,12 @@ export const getPresetRange = (presetId) => {
 export const nf = (v) => (v == null ? "—" : Number(v).toLocaleString("ru-RU"));
 export const rf = (v) => (v == null ? "—" : String(v).replace(".", ",") + "%");
 export const pct = (a, b) => (b ? ((a / b) * 100).toFixed(1) : "0.0");
+
+
+export const STAT_COLORS = {
+  emerald: 'from-emerald-500 to-emerald-600',
+  amber: 'from-amber-400 to-orange-500',
+  indigo: 'from-indigo-500 to-violet-600',
+  blue: 'from-blue-500 to-blue-600',
+  rose: 'from-rose-500 to-pink-600',
+};
