@@ -22,20 +22,24 @@ import SettingsPage from "./pages/SettingsPage";
 import MonitoringPage from "./pages/MonitoringPage";
 import BillingPage from "./pages/BillingPage";
 import SmsPage from "./pages/SmsPage";
+import UsersPage from "./pages/UsersPage";
+import RulesPage from "./pages/RulesPage";
 import { Role } from "./features/auth/authApi";
 import { logout } from "./features/auth/authSlice";
 
 const NAV_ITEMS = [
-  { path: "/", label: "Главная", icon: <Home size={18} />, end: true },
-  { path: "/subscribers", label: "Абоненты", icon: <Users size={18} /> },
-  { path: "/reports", label: "Отчеты", icon: <BarChart3 size={18} /> },
-  { path: "/questions", label: "Вопросы", icon: <Upload size={18} /> },
-  { path: "/lottery", label: "Лотерея", icon: <span>🎰</span> },
-  { path: "/analytics", label: "Аналитика", icon: <BarChart3 size={18} /> },
-  { path: "/monitoring", label: "Мониторинг", icon: <span>📡</span> },
-  { path: "/billing", label: "Биллинг", icon: <span>💰</span> },
-  { path: "/sms", label: "SMS", icon: <span>💬</span> },
-  { path: "/ussd", label: "USSD", icon: <span>💬</span> },
+  { path: "/", label: "Главная", icon: <Home size={18} />, end: true, permission: "dashboard" },
+  { path: "/subscribers", label: "Абоненты", icon: <Users size={18} />, permission: "subscribers" },
+  { path: "/reports", label: "Отчеты", icon: <BarChart3 size={18} />, permission: "reports" },
+  { path: "/questions", label: "Вопросы", icon: <Upload size={18} />, permission: "quiz" },
+  { path: "/lottery", label: "Лотерея", icon: <span>🎰</span>, permission: "periods" },
+  { path: "/analytics", label: "Аналитика", icon: <BarChart3 size={18} />, permission: "analytics" },
+  { path: "/monitoring", label: "Мониторинг", icon: <span>📡</span>, permission: "monitoring" },
+  { path: "/billing", label: "Биллинг", icon: <span>💰</span>, permission: "billing" },
+  { path: "/sms", label: "SMS", icon: <span>💬</span>, permission: "sms_send" },
+  { path: "/ussd", label: "USSD", icon: <span>💬</span>, permission: "ussd_templates" },
+  { path: "/users", label: "Пользователи", icon: <span>🔑</span>, superadminOnly: true },
+  { path: "/rules", label: "Правила (PDF)", icon: <span>📄</span>, permission: "rules" },
 ];
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -72,12 +76,18 @@ const Sidebar = ({ isOpen, onClose }) => {
       <div className="p-5 border-b border-slate-700">
         <h4 className="text-lg">Добро пожаловать</h4>
         <p className="text-lg text-slate-400 mt-1">
-          {user?.username || "Пользователь"}
+          {user?.full_name || user?.username || "Пользователь"}
         </p>
       </div>
 
       <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-        {NAV_ITEMS.map((item) => (
+        {NAV_ITEMS.filter(
+          (item) =>
+            (item.superadminOnly ? user?.is_superadmin : true) &&
+            (!item.permission ||
+              user?.is_superadmin ||
+              user?.permissions?.includes(item.permission))
+        ).map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
@@ -98,20 +108,22 @@ const Sidebar = ({ isOpen, onClose }) => {
       </nav>
 
       <div className="px-3 pb-5 pt-2 border-t border-slate-700 space-y-0.5">
-        <NavLink
-          to="/settings"
-          onClick={onClose}
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition ${
-              isActive
-                ? "bg-white text-slate-900 font-semibold shadow-sm"
-                : "text-slate-300 hover:bg-slate-800 hover:text-white"
-            }`
-          }
-        >
-          <span>⚙️</span>
-          <span className="flex-1">Настройки</span>
-        </NavLink>
+        {(user?.is_superadmin || user?.permissions?.includes("settings")) && (
+          <NavLink
+            to="/settings"
+            onClick={onClose}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition ${
+                isActive
+                  ? "bg-white text-slate-900 font-semibold shadow-sm"
+                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
+              }`
+            }
+          >
+            <span>⚙️</span>
+            <span className="flex-1">Настройки</span>
+          </NavLink>
+        )}
 
         <button
           onClick={handleLogout}
@@ -177,6 +189,8 @@ const Layout = () => {
             <Route path="sms" element={<SmsPage />} />
             <Route path="ussd" element={<SmsPage />} />
             <Route path="lottery" element={<LotteryPage />} />
+            <Route path="users" element={<UsersPage />} />
+            <Route path="rules" element={<RulesPage />} />
             <Route
               path="*"
               element={

@@ -12,7 +12,7 @@ import { fetchSubscribers } from "../features/subscribers/subscribers";
 import { fetchOperators } from "../features/operators/operators";
 import { OPERATOR_COLORS } from "../utils/operatorColors"; // поправь путь под свой проект
 import { useDispatch, useSelector } from "react-redux";
-import { STATUS_CONFIG, STATUS_OPTIONS } from "../utils/statusColor";
+import { useStatuses } from "../utils/statusColor";
 import { formatDate } from "../utils/utils";
 import SubscriberDetailsModal from "../components/SubscriberDetailsModal";
 
@@ -22,7 +22,8 @@ const formatMsisdn = (msisdn) => {
 };
 
 const StatusBadge = ({ status }) => {
-  const cfg = STATUS_CONFIG[status] ?? {
+  const { config } = useStatuses();
+  const cfg = config[status] ?? {
     label: status,
     bg: "#f1f5f9",
     text: "#475569",
@@ -126,6 +127,7 @@ const SubscribersPage = () => {
   const [search, setSearch] = useState("");
   const [operatorFilter, setOperatorFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const { config: statusConfig, options: statusOptions } = useStatuses();
   const [page, setPage] = useState(1);
 
   const [selectedMsisdn, setSelectedMsisdn] = useState(null);
@@ -237,9 +239,9 @@ const SubscribersPage = () => {
                 <th className="px-4 py-3">Сервис</th>
                 <FilterableHeader
                   label="Статус"
-                  options={STATUS_OPTIONS.map((o) => ({
+                  options={statusOptions.map((o) => ({
                     ...o,
-                    color: STATUS_CONFIG[o.value]?.dot,
+                    color: statusConfig[o.value]?.dot,
                   }))}
                   value={statusFilter}
                   onChange={setStatusFilter}
