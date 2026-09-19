@@ -22,6 +22,7 @@ import SettingsPage from "./pages/SettingsPage";
 import MonitoringPage from "./pages/MonitoringPage";
 import BillingPage from "./pages/BillingPage";
 import SmsPage from "./pages/SmsPage";
+import UssdPage from "./pages/UssdPage";
 import UsersPage from "./pages/UsersPage";
 import RulesPage from "./pages/RulesPage";
 import { Role } from "./features/auth/authApi";
@@ -187,7 +188,7 @@ const Layout = () => {
             <Route path="monitoring" element={<MonitoringPage />} />
             <Route path="billing" element={<BillingPage />} />
             <Route path="sms" element={<SmsPage />} />
-            <Route path="ussd" element={<SmsPage />} />
+            <Route path="ussd" element={<UssdPage />} />
             <Route path="lottery" element={<LotteryPage />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="rules" element={<RulesPage />} />

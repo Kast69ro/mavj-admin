@@ -247,6 +247,7 @@ const SubscribersPage = () => {
                   onChange={setStatusFilter}
                 />
                 <th className="px-4 py-3">Язык</th>
+                <th className="px-4 py-3">Баллы</th>
                 <th className="px-4 py-3">Подключён</th>
                 <th className="px-4 py-3">Последнее списание</th>
               </tr>
@@ -255,7 +256,7 @@ const SubscribersPage = () => {
               {isLoading && (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-4 py-10 text-center text-gray-400"
                   >
                     Загрузка...
@@ -266,7 +267,7 @@ const SubscribersPage = () => {
               {!isLoading && error && (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-4 py-10 text-center text-red-500"
                   >
                     {error}
@@ -277,7 +278,7 @@ const SubscribersPage = () => {
               {!isLoading && !error && subscribers.length === 0 && (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-4 py-12 text-center text-gray-400"
                   >
                     <Users size={28} className="mx-auto mb-2 opacity-40" />
@@ -310,6 +311,11 @@ const SubscribersPage = () => {
                       <StatusBadge status={sub.status} />
                     </td>
                     <td className="px-4 py-3 text-gray-500">{sub.language}</td>
+                    <td className="px-4 py-3">
+                      <span className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold">
+                        {sub.points ?? 0}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-gray-500">
                       {formatDate(sub.created_at)}
                     </td>

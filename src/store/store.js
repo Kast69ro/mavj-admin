@@ -7,6 +7,7 @@ import smsSlice from "../features/SMS/sendSMSSlice";
 import analyticsSlice from "../features/analytics/analyticsSlice";
 import periodsSlice from "../features/poriods/periodsSlice"; 
 import billingSlice from "../features/biling/bilingSlice"; 
+import ussdSlice from "../features/USSD/ussdTemplatesSlice";
 
 
 export const store = configureStore({
@@ -19,5 +20,6 @@ export const store = configureStore({
     analytics:analyticsSlice,
     periods: periodsSlice,
     billing: billingSlice,
+    ussd: ussdSlice,
   },
 });

@@ -73,9 +73,15 @@ const QuestionsPage = () => {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    dispatch(fetchQuiz({ page, limit }));
+    const timer = setTimeout(() => {
+      dispatch(fetchQuiz({ page, limit, search }));
+    }, 400); // лёгкий debounce, чтобы не дёргать API на каждую букву
+    return () => clearTimeout(timer);
+  }, [dispatch, page, limit, search]);
+
+  useEffect(() => {
     dispatch(fetchQuizStats());
-  }, [dispatch, page, stats]);
+  }, [dispatch]);
 
   const handleAdd = () => {
     setForm(emptyForm);

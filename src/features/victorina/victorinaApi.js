@@ -3,10 +3,10 @@ import { axiosRequest } from "../../utils/axiosInstance";
 
 export const fetchQuiz = createAsyncThunk(
   "victorina/fetchQuiz",
-  async ({ page = 1, limit = 20 } = {}, { rejectWithValue }) => {
+  async ({ page = 1, limit = 20, search = "" } = {}, { rejectWithValue }) => {
     try {
       const { data } = await axiosRequest.get("/quiz/questions", {
-        params: { page, limit },
+        params: { page, limit, search: search || undefined },
       });
       return data;
     } catch (error) {

@@ -22,7 +22,7 @@ import {
 } from '@mui/material';
 import { X, HelpCircle } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchSubscriberQuiz } from '../features/subscribers/subscribers';
+import { fetchSubscriberQuiz, fetchSubscriberFull } from '../features/subscribers/subscribers';
 import { clearSelectedSubscriber } from '../features/subscribers/subscribersSlice';
 import { formatDate } from '../utils/utils';
 
@@ -67,10 +67,14 @@ const SubscriberDetailsModal = ({ open, onClose, msisdn }) => {
   const { data, isLoading, error } = useSelector(
     (state) => state.subscribers.selectedSubscriber
   );
+  const { data: fullData, isLoading: fullLoading } = useSelector(
+    (state) => state.subscribers.selectedSubscriberFull
+  );
 
   useEffect(() => {
     if (open && msisdn) {
       dispatch(fetchSubscriberQuiz({ msisdn, page, limit }));
+      dispatch(fetchSubscriberFull(msisdn));
     }
   }, [open, msisdn, page, limit, dispatch]);
 
@@ -123,6 +127,53 @@ const SubscriberDetailsModal = ({ open, onClose, msisdn }) => {
           <Typography color="error" textAlign="center" py={4}>
             {error}
           </Typography>
+        )}
+
+        {fullData && (
+          <Paper variant="outlined" sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: '#f8fafc' }}>
+            <Typography variant="subtitle2" fontWeight={700} mb={1.5}>
+              Карточка абонента
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={6} sm={3}>
+                <Typography variant="caption" color="text.secondary">Первая подписка</Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  {fullData.first_subscribed_at ? formatDate(fullData.first_subscribed_at) : '—'}
+                </Typography>
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Typography variant="caption" color="text.secondary">Срок жизни</Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  {fullData.lifetime_days != null ? `${fullData.lifetime_days} дн.` : '—'}
+                </Typography>
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Typography variant="caption" color="text.secondary">Списаний по подписке (1.6)</Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  {fullData.billing_breakdown?.subscription_charges ?? 0} шт. ·{' '}
+                  {Number(fullData.billing_breakdown?.subscription_amount ?? 0).toFixed(2)} TJS
+                </Typography>
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Typography variant="caption" color="text.secondary">Списаний по доп.вопросам (0.9)</Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  {fullData.billing_breakdown?.extra_charges ?? 0} шт. ·{' '}
+                  {Number(fullData.billing_breakdown?.extra_amount ?? 0).toFixed(2)} TJS
+                </Typography>
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <Typography variant="caption" color="text.secondary">Всего списано</Typography>
+                <Typography variant="body2" fontWeight={700} color="success.main">
+                  {Number(fullData.total_spent ?? 0).toFixed(2)} TJS
+                </Typography>
+              </Grid>
+            </Grid>
+          </Paper>
+        )}
+        {fullLoading && !fullData && (
+          <Box display="flex" justifyContent="center" py={2}>
+            <CircularProgress size={20} />
+          </Box>
         )}
 
         {data && (

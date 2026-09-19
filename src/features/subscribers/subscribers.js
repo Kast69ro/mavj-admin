@@ -49,3 +49,17 @@ export const fetchSubscriberQuiz = createAsyncThunk(
   }
 );
 
+export const fetchSubscriberFull = createAsyncThunk(
+  "subscribers/fetchSubscriberFull",
+  async (msisdn, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosRequest.get(`/subscribers/${msisdn}/full`);
+      return data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "Не удалось загрузить карточку абонента"
+      );
+    }
+  }
+);
+

@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { fetchSubscribers, fetchSubscriberQuiz } from "./subscribers";
+import { fetchSubscribers, fetchSubscriberQuiz, fetchSubscriberFull } from "./subscribers";
 
 
 
@@ -18,11 +18,18 @@ const subscribersSlice = createSlice({
       isLoading: false,
       error: null,
     },
+    selectedSubscriberFull: {
+      data: null,
+      isLoading: false,
+      error: null,
+    },
   },
   reducers: {
     clearSelectedSubscriber: (state) => {
       state.selectedSubscriber.data = null;
       state.selectedSubscriber.error = null;
+      state.selectedSubscriberFull.data = null;
+      state.selectedSubscriberFull.error = null;
     },
   },
   extraReducers: (builder) => {
@@ -54,6 +61,19 @@ const subscribersSlice = createSlice({
       .addCase(fetchSubscriberQuiz.rejected, (state, action) => {
         state.selectedSubscriber.isLoading = false;
         state.selectedSubscriber.error = action.payload;
+      })
+
+      .addCase(fetchSubscriberFull.pending, (state) => {
+        state.selectedSubscriberFull.isLoading = true;
+        state.selectedSubscriberFull.error = null;
+      })
+      .addCase(fetchSubscriberFull.fulfilled, (state, action) => {
+        state.selectedSubscriberFull.isLoading = false;
+        state.selectedSubscriberFull.data = action.payload;
+      })
+      .addCase(fetchSubscriberFull.rejected, (state, action) => {
+        state.selectedSubscriberFull.isLoading = false;
+        state.selectedSubscriberFull.error = action.payload;
       });
   },
 });
