@@ -7,7 +7,7 @@ import { axiosRequest } from "../../utils/axiosInstance";
 export const fetchSubscribers = createAsyncThunk(
   "subscribers/fetchSubscribers",
   async (
-    { search, operator, status, page = 1, limit = 20 } = {},
+    { search, operator, status, page = 1, limit = 20, billedToday, sortBy, sortDir } = {},
     { rejectWithValue }
   ) => {
     try {
@@ -16,6 +16,9 @@ export const fetchSubscribers = createAsyncThunk(
           search: search || undefined,
           operator: operator || undefined,
           status: status || undefined,
+          billed_today: billedToday || undefined,
+          sort_by: sortBy || undefined,
+          sort_dir: sortDir || undefined,
           page,
           limit,
         },

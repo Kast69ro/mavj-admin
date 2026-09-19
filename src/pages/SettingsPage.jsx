@@ -7,6 +7,7 @@ import {
   togglePeriodStatus,
   extendPeriod,
 } from "../features/poriods/periodsApi";
+import { fetchOperators, updateOperatorStatus } from "../features/operators/operators";
 import {
   Table,
   TableBody,
@@ -26,8 +27,17 @@ import {
   DialogActions,
   TextField,
   Switch,
+  Select,
+  MenuItem,
+  FormControl,
 } from "@mui/material";
 import { Delete, Add, EventRepeat } from "@mui/icons-material";
+
+const OPERATOR_STATUS_LABELS = {
+  active: "Активен",
+  inactive: "Отключён",
+  coming_soon: "Скоро",
+};
 
 const emptyForm = {
   name: "",
@@ -38,7 +48,16 @@ const emptyForm = {
 
 const PeriodsPage = () => {
   const { periods } = useSelector((state) => state.periods);
+  const { info: operatorsInfo } = useSelector((state) => state.operators);
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchOperators());
+  }, [dispatch]);
+
+  const handleOperatorStatusChange = (code, status) => {
+    dispatch(updateOperatorStatus({ code, status }));
+  };
 
   const [open, setOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -96,6 +115,63 @@ const PeriodsPage = () => {
 
   return (
     <Box>
+      {/* ===== Операторы ===== */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h5" fontWeight={700} sx={{ mb: 2 }}>
+          Операторы
+        </Typography>
+        <Paper variant="outlined" sx={{ borderRadius: 3, overflow: "hidden", border: "1px solid #e5e7f0" }}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                {["Код", "Название", "Статус"].map((h) => (
+                  <TableCell
+                    key={h}
+                    sx={{
+                      backgroundColor: "#f8f9fc",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: 0.5,
+                      color: "#6b7280",
+                    }}
+                  >
+                    {h}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {(operatorsInfo ?? []).map((op) => (
+                <TableRow key={op.id} hover>
+                  <TableCell sx={{ fontFamily: "monospace", color: "#6b7280" }}>{op.code}</TableCell>
+                  <TableCell sx={{ fontWeight: 500 }}>{op.name}</TableCell>
+                  <TableCell>
+                    <FormControl size="small" sx={{ minWidth: 140 }}>
+                      <Select
+                        value={op.status}
+                        onChange={(e) => handleOperatorStatusChange(op.code, e.target.value)}
+                      >
+                        {Object.entries(OPERATOR_STATUS_LABELS).map(([val, label]) => (
+                          <MenuItem key={val} value={val}>{label}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {(!operatorsInfo || operatorsInfo.length === 0) && (
+                <TableRow>
+                  <TableCell colSpan={3} sx={{ textAlign: "center", color: "#9ca3af", py: 3 }}>
+                    Операторы не найдены
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </Paper>
+      </Box>
+
       <Box
         sx={{
           display: "flex",

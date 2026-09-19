@@ -13,3 +13,15 @@ export const fetchOperators = createAsyncThunk(
     }
   }
 );
+
+export const updateOperatorStatus = createAsyncThunk(
+  "operators/updateOperatorStatus",
+  async ({ code, status }, { dispatch, rejectWithValue }) => {
+    try {
+      await axiosRequest.patch(`/operators/${code}/status`, null, { params: { status } });
+      dispatch(fetchOperators());
+    } catch (error) {
+      return rejectWithValue(error.response?.data);
+    }
+  }
+);

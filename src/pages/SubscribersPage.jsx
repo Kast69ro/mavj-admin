@@ -5,6 +5,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
+  ChevronUp,
+  ChevronsUpDown,
   Users,
   Check,
 } from "lucide-react";
@@ -122,13 +124,45 @@ const FilterableHeader = ({ label, options, value, onChange }) => {
   );
 };
 
+const SortableHeader = ({ label, sortKey, currentSort, currentDir, onSort }) => {
+  const isActive = currentSort === sortKey;
+  return (
+    <th
+      className="px-4 py-3 cursor-pointer select-none hover:text-gray-700"
+      onClick={() => onSort(sortKey)}
+    >
+      <span className="flex items-center gap-1">
+        {label}
+        {isActive ? (
+          currentDir === "asc" ? <ChevronUp size={13} /> : <ChevronDown size={13} />
+        ) : (
+          <ChevronsUpDown size={13} className="text-gray-300" />
+        )}
+      </span>
+    </th>
+  );
+};
+
 const SubscribersPage = () => {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [operatorFilter, setOperatorFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [billedToday, setBilledToday] = useState(false);
+  const [sortBy, setSortBy] = useState("created_at");
+  const [sortDir, setSortDir] = useState("desc");
   const { config: statusConfig, options: statusOptions } = useStatuses();
   const [page, setPage] = useState(1);
+
+  const handleSort = (key) => {
+    if (sortBy === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(key);
+      setSortDir("desc");
+    }
+    setPage(1);
+  };
 
   const [selectedMsisdn, setSelectedMsisdn] = useState(null);
 
@@ -166,11 +200,14 @@ const SubscribersPage = () => {
         search,
         operator: operatorFilter || undefined,
         status: statusFilter || undefined,
+        billedToday,
+        sortBy,
+        sortDir,
         page,
         limit,
       }),
     );
-  }, [dispatch, search, operatorFilter, statusFilter, page, limit]);
+  }, [dispatch, search, operatorFilter, statusFilter, billedToday, sortBy, sortDir, page, limit]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -182,7 +219,7 @@ const SubscribersPage = () => {
 
   useEffect(() => {
     setPage(1);
-  }, [operatorFilter, statusFilter]);
+  }, [operatorFilter, statusFilter, billedToday]);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
@@ -223,6 +260,15 @@ const SubscribersPage = () => {
               </button>
             )}
           </div>
+          <label className="flex items-center gap-2 mt-3 text-sm text-gray-600 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={billedToday}
+              onChange={(e) => setBilledToday(e.target.checked)}
+              className="w-4 h-4 rounded border-gray-300"
+            />
+            Показать только списанных сегодня
+          </label>
         </div>
 
         <div className="overflow-x-auto ">
@@ -247,9 +293,9 @@ const SubscribersPage = () => {
                   onChange={setStatusFilter}
                 />
                 <th className="px-4 py-3">Язык</th>
-                <th className="px-4 py-3">Баллы</th>
-                <th className="px-4 py-3">Подключён</th>
-                <th className="px-4 py-3">Последнее списание</th>
+                <SortableHeader label="Баллы" sortKey="points" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                <SortableHeader label="Подключён" sortKey="created_at" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
+                <SortableHeader label="Последнее списание" sortKey="last_billed_at" currentSort={sortBy} currentDir={sortDir} onSort={handleSort} />
               </tr>
             </thead>
             <tbody>
