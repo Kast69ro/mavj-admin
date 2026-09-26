@@ -15,16 +15,41 @@ export const LANGUAGE_OPTIONS = [
   { value: 'tj', label: 'Тоҷикӣ' },
 ];
 
+// Бэкенд отдаёт "наивные" UTC-строки без суффикса Z. Браузер по умолчанию
+// разобрал бы такую строку как СВОЁ локальное время — результат зависел бы
+// от настроек компьютера конкретного администратора. Разбираем явно как UTC
+// и сами прибавляем +5 часов (Asia/Dushanbe, без перехода на летнее время),
+// не полагаясь на локальный часовой пояс браузера вообще.
+const DUSHANBE_OFFSET_MS = 5 * 60 * 60 * 1000;
+
+export const toDushanbeDate = (value) => {
+  if (!value) return null;
+  let iso = String(value).trim();
+  if (!/[Zz]|[+-]\d{2}:?\d{2}$/.test(iso)) {
+    iso = iso.replace(' ', 'T') + 'Z';
+  }
+  const utcDate = new Date(iso);
+  if (isNaN(utcDate.getTime())) return null;
+  return new Date(utcDate.getTime() + DUSHANBE_OFFSET_MS);
+};
+
 export const formatDate = (value) => {
-  if (!value) return '—';
-  const d = new Date(value);
-  return d.toLocaleString('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const d = toDushanbeDate(value);
+  if (!d) return '—';
+  const pad = (n) => String(n).padStart(2, '0');
+  const day = pad(d.getUTCDate());
+  const month = pad(d.getUTCMonth() + 1);
+  const year = d.getUTCFullYear();
+  const hours = pad(d.getUTCHours());
+  const minutes = pad(d.getUTCMinutes());
+  return `${day}.${month}.${year}, ${hours}:${minutes}`;
+};
+
+export const formatDateOnly = (value) => {
+  const d = toDushanbeDate(value);
+  if (!d) return '—';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${pad(d.getUTCDate())}.${pad(d.getUTCMonth() + 1)}.${d.getUTCFullYear()}`;
 };
 
 export const LANGUAGES = [
