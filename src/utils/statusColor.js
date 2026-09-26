@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { axiosRequest } from "./axiosInstance";
 
-// Палитра: бэкенд отдаёт только общее имя цвета (green/red/...),
-// здесь — конкретные hex-значения для фона/текста/точки-индикатора.
 const COLOR_PALETTE = {
   green: { bg: "#dcfce7", text: "#15803d", dot: "#22c55e" },
   red: { bg: "#fee2e2", text: "#b91c1c", dot: "#ef4444" },

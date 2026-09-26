@@ -1,12 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { TrendingUp, Package, Wallet } from "lucide-react";
-import { getPresetRange, nf, STAT_COLORS } from "../utils/utils";
+import {
+  getPresetRange,
+  nf,
+  money,
+  STAT_COLORS,
+  PERIOD_PRESETS,
+  ALL_TIME_FROM,
+  pillBase,
+  pillActive,
+  pillInactive,
+  dateInputClass,
+  buildOperatorOptions,
+  getOperatorPillStyle,
+  today,
+  getMonthRange,
+  getLastMonthRange,
+} from "../utils/utils";
 import { fetchBilling } from "../features/biling/biling";
 import { fetchOperators } from "../features/operators/operators";
-
-const money = (n) =>
-  `${(n ?? 0).toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TJS`;
 
 const StatCard = ({ label, value, icon: Icon, color = "blue" }) => (
   <div
@@ -28,14 +41,11 @@ const StatCard = ({ label, value, icon: Icon, color = "blue" }) => (
   </div>
 );
 
-const inputClass =
-  "px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white " +
-  "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition";
-
 const BillingPage = () => {
   const dispatch = useDispatch();
   const todayRange = getPresetRange("today");
 
+  const [activePreset, setActivePreset] = useState("today");
   const [dateFrom, setDateFrom] = useState(todayRange.from);
   const [dateTo, setDateTo] = useState(todayRange.to);
   const [operator, setOperator] = useState("");
@@ -59,58 +69,135 @@ const BillingPage = () => {
   }, [dateFrom, dateTo, operator, dispatch]);
 
   const periodSelected = Boolean(dateFrom && dateTo);
-  const operatorOptions = [
-  { value: '', label: 'Все операторы' },
-  ...(info || []).map((o) => ({
-    value: o.value ?? o.code ?? o.id,
-    label: o.label ?? o.name ?? o.title,
-  })),
-];
+  const operatorOptions = useMemo(() => buildOperatorOptions(info), [info]);
+
+  const handlePresetClick = (key) => {
+    setActivePreset(key);
+    if (key === "all") {
+      setDateFrom(ALL_TIME_FROM);
+      setDateTo(today());
+      return;
+    }
+    if (key === "month") {
+      const range = getMonthRange();
+      setDateFrom(range.from);
+      setDateTo(range.to);
+      return;
+    }
+    if (key === "lastMonth") {
+      const range = getLastMonthRange();
+      setDateFrom(range.from);
+      setDateTo(range.to);
+      return;
+    }
+    const range = getPresetRange(key);
+    setDateFrom(range.from);
+    setDateTo(range.to);
+  };
+
+  const handleManualDateChange = (setter) => (e) => {
+    setActivePreset(null); // custom range, no preset highlighted
+    setter(e.target.value);
+  };
 
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-800">Биллинг</h2>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div className="flex flex-wrap items-end gap-3">
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">
-              Дата от
-            </label>
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">
-              Дата до
-            </label>
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">
-              Оператор
-            </label>
-            <select
-              value={operator}
-              onChange={(e) => setOperator(e.target.value)}
-              className={inputClass}
-            >
-              {operatorOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-5">
+        <div className="flex flex-wrap items-start justify-between gap-6">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+              Период
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {PERIOD_PRESETS.map((p) => (
+                <button
+                  key={p.key}
+                  type="button"
+                  onClick={() => handlePresetClick(p.key)}
+                  className={`${pillBase} ${
+                    activePreset === p.key ? pillActive : pillInactive
+                  }`}
+                >
+                  {p.label}
+                </button>
               ))}
-            </select>
+            </div>
           </div>
+
+          <div className="space-y-2">
+            <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+              Свои даты
+            </p>
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={handleManualDateChange(setDateFrom)}
+                className={dateInputClass}
+              />
+              <span className="text-gray-400">—</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={handleManualDateChange(setDateTo)}
+                className={dateInputClass}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-end justify-between gap-4 pt-1 border-t border-gray-100">
+          <div className="space-y-2 pt-4">
+            <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+              Компания
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {operatorOptions.map((o) => {
+                const selected = operator === o.value;
+                const style = getOperatorPillStyle(o, selected);
+
+                if (!style) {
+                  const greyed = !o.isAll;
+                  return (
+                    <button
+                      key={o.value || "all"}
+                      type="button"
+                      onClick={() => setOperator(o.value)}
+                      className={`${pillBase} ${
+                        greyed
+                          ? selected
+                            ? "bg-gray-400 border-gray-400 text-white"
+                            : "bg-gray-50 border-gray-200 text-gray-400"
+                          : selected
+                            ? pillActive
+                            : pillInactive
+                      }`}
+                    >
+                      {o.label}
+                    </button>
+                  );
+                }
+
+                return (
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() => setOperator(o.value)}
+                    style={style}
+                    className={`${pillBase} border`}
+                  >
+                    {o.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <p className="text-sm text-gray-500 pt-4">
+            Срез: <span className="font-bold text-gray-800">{today()}</span>
+          </p>
         </div>
       </div>
 

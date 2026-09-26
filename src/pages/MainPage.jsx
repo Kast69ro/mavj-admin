@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchOperators } from "../features/operators/operators";
-import { OPERATOR_COLORS } from "../utils/operatorColors";
 import { axiosRequest } from "../utils/axiosInstance";
 
 const QUARTER_LABELS = { 1: "Янв–Мар", 2: "Апр–Июн", 3: "Июл–Сен", 4: "Окт–Дек" };
@@ -76,9 +75,16 @@ const MainPage = () => {
       {/* Operator selector */}
       <div className="grid grid-cols-6 gap-3">
         {info?.map((op) => {
-          const colors = OPERATOR_COLORS[op.code] ?? { bg: "#9ca3af", active: "#6b7280" };
+          // Цвета берём напрямую с бэка (color_bg / color_active),
+          // с дефолтом на случай, если бэк их не прислал.
+          const colors = {
+            bg: op.color_bg ?? "#9ca3af",
+            active: op.color_active ?? "#6b7280",
+          };
           const isActive = selectedOperator === op.code;
-          const isDisabled = op.status === "coming_soon";
+          const isComingSoon = op.status === "coming_soon";
+          const isInactive = op.status === "inactive";
+          const isDisabled = isComingSoon || isInactive;
           return (
             <button
               key={op.id}
@@ -100,7 +106,7 @@ const MainPage = () => {
               }`}
             >
               {op.name}
-              {isDisabled && <span className="block text-xs font-normal mt-0.5">скоро</span>}
+              {isComingSoon && <span className="block text-xs font-normal mt-0.5">скоро</span>}
             </button>
           );
         })}
