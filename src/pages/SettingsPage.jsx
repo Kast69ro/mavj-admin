@@ -8,6 +8,7 @@ import {
   extendPeriod,
 } from "../features/poriods/periodsApi";
 import { fetchOperators, updateOperatorStatus } from "../features/operators/operators";
+import { formatDateOnly as formatDate } from "../utils/utils";
 import {
   Table,
   TableBody,
@@ -109,9 +110,6 @@ const PeriodsPage = () => {
     dispatch(extendPeriod({ id: extendId, end_date: newEndDate }));
     setExtendOpen(false);
   };
-
-  const formatDate = (d) =>
-    d ? new Date(d).toLocaleDateString("ru-RU") : "—";
 
   return (
     <Box>

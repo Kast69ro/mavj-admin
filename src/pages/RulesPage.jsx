@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { FileText, Upload, ExternalLink, Calendar, HardDrive } from 'lucide-react';
 import { axiosRequest, defaultAxios } from '../utils/axiosInstance';
+import { formatDate } from '../utils/utils';
 
 const OPERATOR_LABEL = { babilon: 'Babilon Mobile', megafon: 'MegaFon' };
 const OPERATORS = ['babilon', 'megafon'];
@@ -10,12 +11,6 @@ const formatSize = (bytes) => {
   const kb = bytes / 1024;
   if (kb < 1024) return `${kb.toFixed(0)} КБ`;
   return `${(kb / 1024).toFixed(1)} МБ`;
-};
-
-const formatDate = (iso) => {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return d.toLocaleString('ru-RU', { dateStyle: 'medium', timeStyle: 'short' });
 };
 
 const RulesPage = () => {
