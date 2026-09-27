@@ -33,6 +33,14 @@ export const toDushanbeDate = (value) => {
   return new Date(utcDate.getTime() + DUSHANBE_OFFSET_MS);
 };
 
+// "Сейчас" в Душанбе, независимо от таймзоны, выставленной на компьютере
+// администратора. Используется во всех пресетах диапазонов дат ниже —
+// раньше они брали new Date() (локальное время браузера) и/или
+// .toISOString() (которое снова переводит в UTC), из-за чего пресет
+// "Сегодня" мог указывать не на ту календарную дату, если у пользователя
+// стоит другой часовой пояс или если сейчас раннее утро по Душанбе.
+const getDushanbeNow = () => new Date(Date.now() + DUSHANBE_OFFSET_MS);
+
 export const formatDate = (value) => {
   const d = toDushanbeDate(value);
   if (!d) return '—';
@@ -57,43 +65,54 @@ export const LANGUAGES = [
   { value: "tj", label: "Тоҷикӣ" },
 ];
 
-export const toISO = (d) => d.toISOString().slice(0, 10);
+// Форматирует дату (уже вычисленную в Душанбе-времени, как объект Date
+// со сдвинутыми UTC-полями) в "YYYY-MM-DD", читая именно getUTC*(),
+// а не toISOString() — иначе сдвиг +5 будет вычтен обратно.
+const toISODushanbe = (d) => {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+};
+
+export const toISO = toISODushanbe;
 
 export const daysBetween = (from, to) =>
   Math.round((new Date(to) - new Date(from)) / 86400000) + 1;
 
 export const getPresetRange = (presetId) => {
-  const today = new Date();
-  const y = today.getFullYear();
-  const m = today.getMonth();
+  const today = getDushanbeNow();
+  const y = today.getUTCFullYear();
+  const m = today.getUTCMonth();
 
   switch (presetId) {
     case "today":
-      return { from: toISO(today), to: toISO(today) };
+      return { from: toISODushanbe(today), to: toISODushanbe(today) };
     case "yesterday": {
       const d = new Date(today);
-      d.setDate(d.getDate() - 1);
-      return { from: toISO(d), to: toISO(d) };
+      d.setUTCDate(d.getUTCDate() - 1);
+      return { from: toISODushanbe(d), to: toISODushanbe(d) };
     }
     case "7d": {
       const d = new Date(today);
-      d.setDate(d.getDate() - 6);
-      return { from: toISO(d), to: toISO(today) };
+      d.setUTCDate(d.getUTCDate() - 6);
+      return { from: toISODushanbe(d), to: toISODushanbe(today) };
     }
     case "30d": {
       const d = new Date(today);
-      d.setDate(d.getDate() - 29);
-      return { from: toISO(d), to: toISO(today) };
+      d.setUTCDate(d.getUTCDate() - 29);
+      return { from: toISODushanbe(d), to: toISODushanbe(today) };
     }
     case "month":
-      return { from: toISO(new Date(y, m, 1)), to: toISO(today) };
+      return {
+        from: toISODushanbe(new Date(Date.UTC(y, m, 1))),
+        to: toISODushanbe(today),
+      };
     case "prevMonth":
       return {
-        from: toISO(new Date(y, m - 1, 1)),
-        to: toISO(new Date(y, m, 0)),
+        from: toISODushanbe(new Date(Date.UTC(y, m - 1, 1))),
+        to: toISODushanbe(new Date(Date.UTC(y, m, 0))),
       };
     default:
-      return { from: toISO(today), to: toISO(today) };
+      return { from: toISODushanbe(today), to: toISODushanbe(today) };
   }
 };
 
@@ -111,19 +130,14 @@ export const STAT_COLORS = {
 };
 
 
-// --- Добавить в utils/utils.js ---------------------------------------------
 
 export const money = (n) =>
   `${(n ?? 0).toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TJS`;
 
-export const today = () => new Date().toISOString().slice(0, 10);
+export const today = () => toISODushanbe(getDushanbeNow());
 
-// Условная дата "начала времён" — замени на реальную дату старта платформы,
-// если она у тебя есть.
 export const ALL_TIME_FROM = "2020-01-01";
 
-// NOTE: ключи должны совпадать с тем, что понимает твой getPresetRange
-// ("today" | "yesterday" | "month" | "lastMonth" уже поддерживаются судя по коду).
 export const PERIOD_PRESETS = [
   { key: "today", label: "Сегодня" },
   { key: "yesterday", label: "Вчера" },
@@ -164,24 +178,16 @@ export const getOperatorPillStyle = (operator, selected) => {
     : { backgroundColor: `${operator.colorBg}1a`, borderColor: operator.colorBg, color: operator.colorActive };
 };
 
-
-const toISODate = (d) => {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-};
-
 export const getMonthRange = () => {
-  const now = new Date();
-  const from = new Date(now.getFullYear(), now.getMonth(), 1);
-  const to = new Date(now.getFullYear(), now.getMonth() + 1, 0); // последний день текущего месяца
-  return { from: toISODate(from), to: toISODate(to) };
+  const now = getDushanbeNow();
+  const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const to = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0)); // последний день текущего месяца
+  return { from: toISODushanbe(from), to: toISODushanbe(to) };
 };
 
 export const getLastMonthRange = () => {
-  const now = new Date();
-  const from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const to = new Date(now.getFullYear(), now.getMonth(), 0); // последний день прошлого месяца
-  return { from: toISODate(from), to: toISODate(to) };
+  const now = getDushanbeNow();
+  const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+  const to = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0)); // последний день прошлого месяца
+  return { from: toISODushanbe(from), to: toISODushanbe(to) };
 };
