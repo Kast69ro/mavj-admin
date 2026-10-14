@@ -33,3 +33,12 @@ export const exportToCSV = (companies, reportDateFrom, reportDateTo) => {
   link.click();
   document.body.removeChild(link);
 };
+
+// Статус периода оператора: черновик / предстоит / идёт / завершён.
+// todayISO — сегодняшняя дата по Душанбе в формате YYYY-MM-DD.
+export const getPeriodPhase = (period, todayISO) => {
+  if (!period?.is_published) return { text: 'Черновик', bg: 'bg-gray-100', color: 'text-gray-600' };
+  if (todayISO < period.start_date) return { text: 'Предстоит', bg: 'bg-sky-100', color: 'text-sky-800' };
+  if (todayISO > period.end_date) return { text: 'Завершён', bg: 'bg-amber-100', color: 'text-amber-800' };
+  return { text: 'Идёт', bg: 'bg-emerald-100', color: 'text-emerald-800' };
+};

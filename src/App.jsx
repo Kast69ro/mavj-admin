@@ -25,6 +25,9 @@ import SmsPage from "./pages/SmsPage";
 import UssdPage from "./pages/UssdPage";
 import UsersPage from "./pages/UsersPage";
 import RulesPage from "./pages/RulesPage";
+import OperatorContentPage from "./pages/OperatorContentPage";
+import OperatorPeriodsPage from "./pages/OperatorPeriodsPage";
+import OperatorPeriodPage from "./pages/OperatorPeriodPage";
 import { Role } from "./features/auth/authApi";
 import { logout } from "./features/auth/authSlice";
 
@@ -41,6 +44,7 @@ const NAV_ITEMS = [
   { path: "/ussd", label: "USSD", icon: <span>💬</span>, permission: "ussd_templates" },
   { path: "/users", label: "Пользователи", icon: <span>🔑</span>, superadminOnly: true },
   { path: "/rules", label: "Правила (PDF)", icon: <span>📄</span>, permission: "rules" },
+  { path: "/operator-content", label: "Операторы", icon: <span>📱</span>, permission: "operators" },
 ];
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -192,6 +196,9 @@ const Layout = () => {
             <Route path="lottery" element={<LotteryPage />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="rules" element={<RulesPage />} />
+            <Route path="operator-content" element={<OperatorContentPage />} />
+            <Route path="operator-content/:code" element={<OperatorPeriodsPage />} />
+            <Route path="operator-content/periods/:periodId" element={<OperatorPeriodPage />} />
             <Route
               path="*"
               element={

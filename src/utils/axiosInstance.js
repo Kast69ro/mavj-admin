@@ -21,7 +21,8 @@ axiosRequest.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      // BASE_URL учитывает базовый путь сборки (например /admin/ в build:admin)
+      window.location.href = `${import.meta.env.BASE_URL}login`;
     }
     return Promise.reject(error);
   }

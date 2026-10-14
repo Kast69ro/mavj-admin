@@ -8,6 +8,7 @@ import analyticsSlice from "../features/analytics/analyticsSlice";
 import periodsSlice from "../features/poriods/periodsSlice"; 
 import billingSlice from "../features/biling/bilingSlice"; 
 import ussdSlice from "../features/USSD/ussdTemplatesSlice";
+import operatorContentSlice from "../features/operatorContent/operatorContentSlice";
 
 
 export const store = configureStore({
@@ -21,5 +22,6 @@ export const store = configureStore({
     periods: periodsSlice,
     billing: billingSlice,
     ussd: ussdSlice,
+    operatorContent: operatorContentSlice,
   },
 });

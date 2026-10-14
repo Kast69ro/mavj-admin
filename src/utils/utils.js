@@ -191,3 +191,29 @@ export const getLastMonthRange = () => {
   const to = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0)); // последний день прошлого месяца
   return { from: toISODushanbe(from), to: toISODushanbe(to) };
 };
+// Бэкенд отдаёт картинки относительным путём (/api/uploads/...). Админка может
+// работать с другого домена (локально), поэтому дописываем origin API.
+export const mediaUrl = (path) => {
+  if (!path) return null;
+  if (/^(https?:|blob:|data:)/i.test(path)) return path;
+  try {
+    return new URL(path, new URL(import.meta.env.VITE_API_URL, window.location.origin)).href;
+  } catch {
+    return path;
+  }
+};
+
+// Номер абонента: принимает 9 цифр или 12 с кодом 992, возвращает 12 цифр или null.
+export const normalizeMsisdn = (value) => {
+  const digits = String(value ?? "").replace(/\D/g, "");
+  if (digits.length === 9) return `992${digits}`;
+  if (digits.length === 12 && digits.startsWith("992")) return digits;
+  return null;
+};
+
+// 992901234567 → +992 90 123 45 67
+export const formatMsisdn = (value) => {
+  const n = normalizeMsisdn(value);
+  if (!n) return value || "—";
+  return `+992 ${n.slice(3, 5)} ${n.slice(5, 8)} ${n.slice(8, 10)} ${n.slice(10)}`;
+};
