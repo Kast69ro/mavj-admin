@@ -13,6 +13,11 @@ import ImageUploadModal from '../components/ImageUploadModal';
 import OperatorRulesModal from '../components/OperatorRulesModal';
 import { ConfirmModal, ErrorBox } from '../components/ContentModal';
 
+const OPERATOR_STATUS_LABELS = {
+  inactive: 'Отключён',
+  coming_soon: 'Скоро',
+};
+
 const OperatorContentPage = () => {
   const dispatch = useDispatch();
   const { operators, operatorsLoading, operatorsError } = useSelector((state) => state.operatorContent);
@@ -66,8 +71,18 @@ const OperatorContentPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {operators.map((op) => {
           const colors = OPERATOR_COLORS[op.code] ?? OPERATOR_COLORS.default;
+          // Неактивные операторы (inactive, coming_soon и т.п.) показываем затемнёнными и без действий
+          const isActive = op.status === 'active';
           return (
-            <div key={op.code} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+            <div
+              key={op.code}
+              aria-disabled={!isActive}
+              className={`rounded-xl shadow-sm border overflow-hidden flex flex-col ${
+                isActive
+                  ? 'bg-white border-gray-200'
+                  : 'bg-gray-100 border-gray-300 opacity-60 grayscale pointer-events-none select-none'
+              }`}
+            >
               <div className="h-1.5" style={{ backgroundColor: colors.bg }} />
               <div className="p-6 flex-1 flex flex-col">
                 <div className="flex items-center gap-4 mb-5">
@@ -79,7 +94,14 @@ const OperatorContentPage = () => {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-semibold text-lg text-gray-800">{op.name}</h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-lg text-gray-800">{op.name}</h3>
+                      {!isActive && (
+                        <span className="px-2 py-0.5 bg-gray-200 text-gray-600 rounded-full text-xs font-medium">
+                          {OPERATOR_STATUS_LABELS[op.status] ?? op.status}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs font-mono text-gray-400">{op.code}</p>
                   </div>
                 </div>
