@@ -69,22 +69,7 @@ const OperatorsNav = ({ icon, label, onNavigate }) => {
               const colors = OPERATOR_COLORS[op.code] ?? OPERATOR_COLORS.default;
               const isActive = op.status === "active";
 
-              if (!isActive) {
-                return (
-                  <div
-                    key={op.code}
-                    aria-disabled="true"
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-500 cursor-not-allowed select-none"
-                  >
-                    <span className="w-2 h-2 rounded-full shrink-0 bg-slate-600" />
-                    <span className="flex-1 truncate">{op.name}</span>
-                    <span className="text-[10px] uppercase tracking-wide">
-                      {OPERATOR_STATUS_LABELS[op.status] ?? op.status}
-                    </span>
-                  </div>
-                );
-              }
-
+              // Выключенные тоже открываются (чтобы их можно было включить), но показываются серым
               return (
                 <NavLink
                   key={op.code}
@@ -94,12 +79,22 @@ const OperatorsNav = ({ icon, label, onNavigate }) => {
                     `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition ${
                       linkActive
                         ? "bg-white text-slate-900 font-semibold shadow-sm"
-                        : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                        : isActive
+                          ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                          : "text-slate-500 hover:bg-slate-800 hover:text-slate-300"
                     }`
                   }
                 >
-                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: colors.bg }} />
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ backgroundColor: isActive ? colors.bg : "#475569" }}
+                  />
                   <span className="flex-1 truncate">{op.name}</span>
+                  {!isActive && (
+                    <span className="text-[10px] uppercase tracking-wide">
+                      {OPERATOR_STATUS_LABELS[op.status] ?? op.status}
+                    </span>
+                  )}
                 </NavLink>
               );
             })}

@@ -1,16 +1,21 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, NavLink, Outlet, useParams } from 'react-router-dom';
-import { CalendarRange, Globe } from 'lucide-react';
-import { fetchContentOperators } from '../features/operatorContent/operatorContentApi';
+import { CalendarRange, Globe, SlidersHorizontal, Contact, Handshake, Receipt, Wallet } from 'lucide-react';
+import { fetchContentOperators, OPERATOR_STATUSES } from '../features/operatorContent/operatorContentApi';
 import { OPERATOR_COLORS } from '../utils/operatorColors';
 import { mediaUrl } from '../utils/utils';
 import { ErrorBox } from '../components/ContentModal';
 
 // Разделы страницы оператора. Новая функция = новая вкладка здесь + дочерний маршрут в App.jsx
 const OPERATOR_TABS = [
+  { path: 'general', label: 'Общее', icon: <Globe size={16} /> },
+  { path: 'settings', label: 'Настройки', icon: <SlidersHorizontal size={16} /> },
   { path: 'periods', label: 'Периоды', icon: <CalendarRange size={16} /> },
-  { path: 'site', label: 'Сайт', icon: <Globe size={16} /> },
+  { path: 'contacts', label: 'Ответственные', icon: <Contact size={16} /> },
+  { path: 'partners', label: 'Партнёры', icon: <Handshake size={16} /> },
+  { path: 'expenses', label: 'Расходы', icon: <Receipt size={16} /> },
+  { path: 'finance', label: 'Финансы', icon: <Wallet size={16} /> },
 ];
 
 export const OperatorsIndexRedirect = () => {
@@ -21,7 +26,7 @@ export const OperatorsIndexRedirect = () => {
     if (operators.length === 0) dispatch(fetchContentOperators());
   }, [dispatch, operators.length]);
 
-  const first = operators.find((o) => o.status === 'active');
+  const first = operators.find((o) => o.status === 'active') ?? operators[0];
   if (first) return <Navigate to={`/operator-content/${first.code}`} replace />;
 
   return (
@@ -33,7 +38,7 @@ export const OperatorsIndexRedirect = () => {
       ) : (
         !operatorsError && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-10 text-center text-sm text-gray-400">
-            Активные операторы не найдены
+            Операторы не найдены
           </div>
         )
       )}
@@ -88,7 +93,14 @@ const OperatorLayout = () => {
             )}
           </div>
           <div className="min-w-0">
-            <h2 className="text-2xl font-bold text-gray-800">{operator.name}</h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-2xl font-bold text-gray-800">{operator.name}</h2>
+              {!isActive && (
+                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                  {OPERATOR_STATUSES.find((st) => st.value === operator.status)?.label ?? operator.status}
+                </span>
+              )}
+            </div>
             <p className="text-xs font-mono text-gray-400">{operator.code}</p>
           </div>
         </div>
@@ -111,13 +123,14 @@ const OperatorLayout = () => {
         </nav>
       </div>
 
-      {isActive ? (
-        <Outlet context={{ operator, colors }} />
-      ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-10 text-center text-sm text-gray-400">
-          Оператор отключён — управление недоступно
+      {!isActive && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg p-3">
+          Оператор выключен: на сайте его страница недоступна, в остальных разделах админки он не показывается.
+          Включить можно на вкладке «Общее».
         </div>
       )}
+
+      <Outlet context={{ operator, colors }} />
     </div>
   );
 };

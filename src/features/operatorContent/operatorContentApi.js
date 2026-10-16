@@ -241,3 +241,99 @@ export const deleteWinner = createAsyncThunk(
     }
   }
 );
+
+// ===== Вкл/выкл оператора =====
+
+export const OPERATOR_STATUSES = [
+  { value: "active", label: "Включён" },
+  { value: "inactive", label: "Выключен" },
+  { value: "coming_soon", label: "Скоро" },
+];
+
+export const setOperatorStatus = createAsyncThunk(
+  "operatorContent/setOperatorStatus",
+  async ({ code, status }, { dispatch, rejectWithValue }) => {
+    try {
+      await axiosRequest.patch(`/operators/${code}/status`, null, { params: { status } });
+      dispatch(fetchContentOperators());
+      return { code, status };
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error, "Не удалось изменить статус оператора"));
+    }
+  }
+);
+
+// ===== Настройки, ответственные, партнёры, расходы, финансы =====
+// Данные этих вкладок живут в состоянии страницы, поэтому thunk просто возвращает ответ.
+
+const request = (type, fallback, call) =>
+  createAsyncThunk(`operatorContent/${type}`, async (arg, { rejectWithValue }) => {
+    try {
+      const { data } = await call(arg);
+      return data;
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error, fallback));
+    }
+  });
+
+export const fetchOperatorSettings = request("fetchSettings", "Не удалось загрузить настройки", (code) =>
+  axiosRequest.get(`${BASE}/operators/${code}/settings`)
+);
+export const updateOperatorSettings = request("updateSettings", "Не удалось сохранить настройки", ({ code, ...payload }) =>
+  axiosRequest.patch(`${BASE}/operators/${code}/settings`, payload)
+);
+
+export const fetchOperatorContacts = request("fetchContacts", "Не удалось загрузить ответственных", (code) =>
+  axiosRequest.get(`${BASE}/operators/${code}/contacts`)
+);
+export const saveOperatorContact = request("saveContact", "Не удалось сохранить контакт", ({ code, id, ...payload }) =>
+  id
+    ? axiosRequest.patch(`${BASE}/contacts/${id}`, payload)
+    : axiosRequest.post(`${BASE}/operators/${code}/contacts`, payload)
+);
+export const deleteOperatorContact = request("deleteContact", "Не удалось удалить контакт", (id) =>
+  axiosRequest.delete(`${BASE}/contacts/${id}`)
+);
+
+export const fetchOperatorPartners = request("fetchPartners", "Не удалось загрузить партнёров", (code) =>
+  axiosRequest.get(`${BASE}/operators/${code}/partners`)
+);
+export const saveOperatorPartner = request("savePartner", "Не удалось сохранить партнёра", ({ code, id, ...payload }) =>
+  id
+    ? axiosRequest.patch(`${BASE}/partners/${id}`, payload)
+    : axiosRequest.post(`${BASE}/operators/${code}/partners`, payload)
+);
+export const deleteOperatorPartner = request("deletePartner", "Не удалось удалить партнёра", (id) =>
+  axiosRequest.delete(`${BASE}/partners/${id}`)
+);
+
+// Категории приводим к [{code, label}] — независимо от того, пришёл ли список или словарь code → label
+const normalizeCategories = (data) => {
+  const raw = data?.categories ?? data;
+  if (Array.isArray(raw)) {
+    return raw.map((c) => ({ code: c.code ?? c.value ?? c.key ?? c.id, label: c.label ?? c.name ?? c.title }));
+  }
+  return Object.entries(raw || {}).map(([code, label]) => ({ code, label }));
+};
+
+export const fetchExpenseCategories = request("fetchExpenseCategories", "Не удалось загрузить категории расходов", () =>
+  axiosRequest.get(`${BASE}/expense-categories`).then((res) => ({ data: normalizeCategories(res.data) }))
+);
+export const fetchOperatorExpenses = request("fetchExpenses", "Не удалось загрузить расходы", (code) =>
+  axiosRequest.get(`${BASE}/operators/${code}/expenses`)
+);
+export const saveOperatorExpense = request("saveExpense", "Не удалось сохранить расход", ({ code, id, ...payload }) =>
+  id
+    ? axiosRequest.patch(`${BASE}/expenses/${id}`, payload)
+    : axiosRequest.post(`${BASE}/operators/${code}/expenses`, payload)
+);
+export const deleteOperatorExpense = request("deleteExpense", "Не удалось удалить расход", (id) =>
+  axiosRequest.delete(`${BASE}/expenses/${id}`)
+);
+
+export const fetchOperatorFinance = request("fetchFinance", "Не удалось загрузить финансы", ({ code, date_from, date_to }) =>
+  axiosRequest.get(`${BASE}/operators/${code}/finance`, { params: { date_from, date_to } })
+);
+export const fetchAllFinance = request("fetchAllFinance", "Не удалось загрузить финансы", ({ date_from, date_to }) =>
+  axiosRequest.get(`${BASE}/finance`, { params: { date_from, date_to } })
+);

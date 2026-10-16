@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Plus, Pencil, Trash2, ChevronRight, Eye, EyeOff, Gift, Trophy } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronRight, Gift, Trophy, Power } from 'lucide-react';
 import {
   fetchOperatorPeriods,
   createOperatorPeriod,
@@ -79,6 +79,7 @@ const OperatorPeriodListPage = () => {
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Название</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Даты</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Статус</th>
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Баллы</th>
               <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Призы</th>
               <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Победители</th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Действия</th>
@@ -86,11 +87,11 @@ const OperatorPeriodListPage = () => {
           </thead>
           <tbody>
             {periodsLoading && rows.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-6 text-center text-sm text-gray-400">Загрузка…</td></tr>
+              <tr><td colSpan={7} className="px-4 py-6 text-center text-sm text-gray-400">Загрузка…</td></tr>
             )}
             {!periodsLoading && !periodsError && rows.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-center">
+                <td colSpan={7} className="px-4 py-10 text-center">
                   <p className="text-sm text-gray-400 mb-3">У этого оператора ещё нет периодов</p>
                   <button
                     onClick={() => setShowCreate(true)}
@@ -118,6 +119,7 @@ const OperatorPeriodListPage = () => {
                       {phase.text}
                     </span>
                   </td>
+                  <td className="px-4 py-3 text-sm text-center text-gray-600">{p.min_points ?? 0}</td>
                   <td className="px-4 py-3 text-sm text-center text-gray-600">
                     <span className="inline-flex items-center gap-1"><Gift size={14} className="text-gray-400" />{p.prizes_count ?? 0}</span>
                   </td>
@@ -128,10 +130,21 @@ const OperatorPeriodListPage = () => {
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => handleTogglePublished(p)}
-                        title={p.is_published ? 'Скрыть (в черновик)' : 'Опубликовать'}
-                        className="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded"
+                        disabled={!p.is_published && !p.prizes_count}
+                        title={
+                          p.is_published
+                            ? 'Выключить период'
+                            : p.prizes_count
+                              ? 'Включить период'
+                              : 'Чтобы включить период, добавьте хотя бы один приз'
+                        }
+                        className={`p-1.5 rounded disabled:opacity-40 disabled:cursor-not-allowed ${
+                          p.is_published
+                            ? 'text-emerald-600 hover:bg-emerald-50'
+                            : 'text-gray-400 hover:text-emerald-600 hover:bg-emerald-50'
+                        }`}
                       >
-                        {p.is_published ? <Eye size={16} /> : <EyeOff size={16} />}
+                        <Power size={16} />
                       </button>
                       <button onClick={() => setEditPeriod(p)} title="Редактировать" className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded">
                         <Pencil size={16} />
@@ -162,11 +175,12 @@ const OperatorPeriodListPage = () => {
       {(showCreate || editPeriod) && (
         <OperatorPeriodModal
           period={editPeriod}
-          onSave={(data) =>
-            editPeriod
-              ? dispatch(updateOperatorPeriod({ id: editPeriod.id, ...data })).unwrap()
-              : dispatch(createOperatorPeriod({ code, ...data })).unwrap()
-          }
+          onSave={async (data) => {
+            if (editPeriod) return dispatch(updateOperatorPeriod({ id: editPeriod.id, ...data })).unwrap();
+            // Новый период выключен, пока нет призов — сразу открываем его, чтобы добавить призы
+            const created = await dispatch(createOperatorPeriod({ code, ...data })).unwrap();
+            if (created?.id) navigate(`/operator-content/${code}/periods/${created.id}`);
+          }}
           onClose={() => { setShowCreate(false); setEditPeriod(null); }}
         />
       )}

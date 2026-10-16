@@ -29,6 +29,11 @@ import OperatorLayout, { OperatorsIndexRedirect } from "./pages/OperatorLayout";
 import OperatorPeriodListPage from "./pages/OperatorPeriodListPage";
 import OperatorPeriodDetailPage from "./pages/OperatorPeriodDetailPage";
 import OperatorSitePage from "./pages/OperatorSitePage";
+import OperatorSettingsPage from "./pages/OperatorSettingsPage";
+import OperatorContactsPage from "./pages/OperatorContactsPage";
+import OperatorPartnersPage from "./pages/OperatorPartnersPage";
+import OperatorExpensesPage from "./pages/OperatorExpensesPage";
+import OperatorFinancePage from "./pages/OperatorFinancePage";
 import OperatorsNav from "./components/OperatorsNav";
 import { Role } from "./features/auth/authApi";
 import { logout } from "./features/auth/authSlice";
@@ -204,10 +209,16 @@ const Layout = () => {
             <Route path="rules" element={<RulesPage />} />
             <Route path="operator-content" element={<OperatorsIndexRedirect />} />
             <Route path="operator-content/:code" element={<OperatorLayout />}>
-              <Route index element={<Navigate to="periods" replace />} />
+              <Route index element={<Navigate to="general" replace />} />
+              <Route path="general" element={<OperatorSitePage />} />
+              <Route path="site" element={<Navigate to="../general" replace />} />
+              <Route path="settings" element={<OperatorSettingsPage />} />
               <Route path="periods" element={<OperatorPeriodListPage />} />
               <Route path="periods/:periodId" element={<OperatorPeriodDetailPage />} />
-              <Route path="site" element={<OperatorSitePage />} />
+              <Route path="contacts" element={<OperatorContactsPage />} />
+              <Route path="partners" element={<OperatorPartnersPage />} />
+              <Route path="expenses" element={<OperatorExpensesPage />} />
+              <Route path="finance" element={<OperatorFinancePage />} />
             </Route>
             <Route
               path="*"

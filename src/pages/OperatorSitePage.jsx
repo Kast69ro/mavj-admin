@@ -1,14 +1,20 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useOutletContext } from 'react-router-dom';
-import { Upload, ExternalLink, Pencil, Trash2, ImageOff, FileText } from 'lucide-react';
-import { updateContentOperator, uploadOperatorLogo } from '../features/operatorContent/operatorContentApi';
+import { Upload, ExternalLink, Pencil, Trash2, ImageOff, FileText, Power } from 'lucide-react';
+import {
+  updateContentOperator,
+  uploadOperatorLogo,
+  setOperatorStatus,
+  OPERATOR_STATUSES,
+} from '../features/operatorContent/operatorContentApi';
+import { fetchOperators } from '../features/operators/operators';
 import { mediaUrl } from '../utils/utils';
 import ImageUploadModal from '../components/ImageUploadModal';
 import OperatorRulesModal from '../components/OperatorRulesModal';
-import { ConfirmModal } from '../components/ContentModal';
+import { ConfirmModal, ErrorBox } from '../components/ContentModal';
 
-// Вкладка «Сайт»: логотип и регламент оператора
+// Вкладка «Общее»: вкл/выкл, логотип и регламент оператора
 const OperatorSitePage = () => {
   const dispatch = useDispatch();
   const { operator } = useOutletContext();
@@ -18,6 +24,22 @@ const OperatorSitePage = () => {
   const [removeLogoOpen, setRemoveLogoOpen] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [removeError, setRemoveError] = useState(null);
+  const [statusSaving, setStatusSaving] = useState(false);
+  const [statusError, setStatusError] = useState(null);
+
+  const handleStatusChange = async (status) => {
+    if (status === operator.status) return;
+    setStatusSaving(true);
+    setStatusError(null);
+    try {
+      await dispatch(setOperatorStatus({ code: operator.code, status })).unwrap();
+      dispatch(fetchOperators()); // список включённых для остальных разделов
+    } catch (e) {
+      setStatusError(e);
+    } finally {
+      setStatusSaving(false);
+    }
+  };
 
   const handleRemoveLogo = async () => {
     setRemoving(true);
@@ -34,6 +56,43 @@ const OperatorSitePage = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="md:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <Power size={18} className={operator.status === 'active' ? 'text-emerald-600 mt-0.5' : 'text-gray-400 mt-0.5'} />
+            <div>
+              <h3 className="font-semibold text-gray-800">Статус оператора</h3>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Выключенный оператор не показывается на сайте и в остальных разделах админки
+              </p>
+            </div>
+          </div>
+          <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+            {OPERATOR_STATUSES.map((st) => {
+              const selected = operator.status === st.value;
+              return (
+                <button
+                  key={st.value}
+                  type="button"
+                  disabled={statusSaving}
+                  onClick={() => handleStatusChange(st.value)}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition disabled:opacity-60 ${
+                    selected
+                      ? st.value === 'active'
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'bg-white text-gray-800 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-800'
+                  }`}
+                >
+                  {st.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        {statusError && <div className="mt-4"><ErrorBox>{statusError}</ErrorBox></div>}
+      </div>
+
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col">
         <h3 className="font-semibold text-gray-800 mb-4">Логотип</h3>
         <div className="w-28 h-28 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden mb-5">

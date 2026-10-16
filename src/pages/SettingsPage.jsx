@@ -49,11 +49,11 @@ const emptyForm = {
 
 const PeriodsPage = () => {
   const { periods } = useSelector((state) => state.periods);
-  const { info: operatorsInfo } = useSelector((state) => state.operators);
+  const { all: operatorsInfo } = useSelector((state) => state.operators);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(fetchOperators());
+    dispatch(fetchOperators({ all: true }));
   }, [dispatch]);
 
   const handleOperatorStatusChange = (code, status) => {

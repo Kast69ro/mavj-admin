@@ -8,10 +8,13 @@ const PrizeModal = ({ prize, nextSortOrder = 0, onSave, onClose }) => {
     title: prize?.title ?? '',
     description: prize?.description ?? '',
     sort_order: prize?.sort_order ?? nextSortOrder,
+    cost: prize?.cost ?? '',
   });
   const [image, setImage] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+
+  const costInvalid = form.cost !== '' && !(Number(form.cost) >= 0);
 
   const handleSave = async () => {
     setSaving(true);
@@ -21,6 +24,7 @@ const PrizeModal = ({ prize, nextSortOrder = 0, onSave, onClose }) => {
         title: form.title.trim(),
         description: form.description.trim() || null,
         sort_order: Number(form.sort_order) || 0,
+        cost: form.cost === '' ? null : Number(form.cost),
         image,
       });
       onClose();
@@ -52,6 +56,16 @@ const PrizeModal = ({ prize, nextSortOrder = 0, onSave, onClose }) => {
             className={inputClass}
           />
         </Field>
+        <Field label="Стоимость, TJS" hint="Попадёт в расходы оператора (категория «Призы») в месяце окончания периода">
+          <input
+            type="number"
+            min={0}
+            step="0.01"
+            value={form.cost}
+            onChange={(e) => setForm({ ...form, cost: e.target.value })}
+            className={`${inputClass} ${costInvalid ? 'border-red-400' : ''}`}
+          />
+        </Field>
         <Field label="Порядок показа" hint="Меньше — выше в списке">
           <input
             type="number"
@@ -63,7 +77,7 @@ const PrizeModal = ({ prize, nextSortOrder = 0, onSave, onClose }) => {
         <ErrorBox>{error}</ErrorBox>
         <button
           onClick={handleSave}
-          disabled={saving || !form.title.trim()}
+          disabled={saving || !form.title.trim() || costInvalid}
           className="w-full py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50"
         >
           {saving ? 'Сохранение…' : isEdit ? 'Сохранить' : 'Добавить'}

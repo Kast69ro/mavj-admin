@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { Plus, Pencil, Trash2, ChevronLeft, Camera, Gift, Trophy, User, Calendar } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronLeft, Camera, Gift, Trophy, User, Calendar, Star, Power } from 'lucide-react';
 import {
   fetchPeriodDetail,
   updateOperatorPeriod,
@@ -13,7 +13,7 @@ import {
   uploadWinnerPhoto,
   deleteWinner,
 } from '../features/operatorContent/operatorContentApi';
-import { formatDateOnly, formatMsisdn, mediaUrl, today } from '../utils/utils';
+import { formatDateOnly, formatMsisdn, mediaUrl, money, today } from '../utils/utils';
 import { getPeriodPhase } from '../utils/helpers';
 import OperatorPeriodModal from '../components/OperatorPeriodModal';
 import PrizeModal from '../components/PrizeModal';
@@ -49,6 +49,8 @@ const OperatorPeriodDetailPage = () => {
   const [confirm, setConfirm] = useState(null); // { type: 'period' | 'prize' | 'winner', item }
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState(null);
+  const [toggling, setToggling] = useState(false);
+  const [toggleError, setToggleError] = useState(null);
 
   useEffect(() => {
     dispatch(fetchPeriodDetail(periodId));
@@ -65,6 +67,20 @@ const OperatorPeriodDetailPage = () => {
     () => [...(detail?.winners || [])].sort((a, b) => (a.place ?? Infinity) - (b.place ?? Infinity) || a.id - b.id),
     [detail]
   );
+
+  const prizesCost = prizes.reduce((sum, p) => sum + (Number(p.cost) || 0), 0);
+
+  const handleTogglePublished = async () => {
+    setToggling(true);
+    setToggleError(null);
+    try {
+      await dispatch(updateOperatorPeriod({ id: period.id, is_published: !period.is_published })).unwrap();
+    } catch (e) {
+      setToggleError(e);
+    } finally {
+      setToggling(false);
+    }
+  };
 
   const nextSortOrder = prizes.length ? Math.max(...prizes.map((p) => p.sort_order ?? 0)) + 1 : 0;
 
@@ -126,14 +142,34 @@ const OperatorPeriodDetailPage = () => {
             <h2 className="text-2xl font-bold text-gray-800">{period.name}</h2>
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${phase.bg} ${phase.color}`}>{phase.text}</span>
           </div>
-          <p className="flex items-center gap-2 text-sm text-gray-500 mt-2">
-            <Calendar size={14} /> {formatDateOnly(period.start_date)} — {formatDateOnly(period.end_date)}
-          </p>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-gray-500 mt-2">
+            <span className="flex items-center gap-2">
+              <Calendar size={14} /> {formatDateOnly(period.start_date)} — {formatDateOnly(period.end_date)}
+            </span>
+            <span className="flex items-center gap-2">
+              <Star size={14} /> Для участия: {period.min_points ?? 0} балл.
+            </span>
+          </div>
           {!period.is_published && (
-            <p className="text-xs text-gray-400 mt-1">Черновик — не показывается на сайте оператора</p>
+            <p className="text-xs text-gray-400 mt-1">
+              {prizes.length
+                ? 'Период выключен — не показывается на сайте оператора'
+                : 'Период выключен. Чтобы включить, добавьте хотя бы один приз'}
+            </p>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={handleTogglePublished}
+            disabled={toggling || (!period.is_published && prizes.length === 0)}
+            className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 disabled:opacity-50 ${
+              period.is_published
+                ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700'
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+            }`}
+          >
+            <Power size={16} /> {period.is_published ? 'Включён' : 'Включить'}
+          </button>
           <button
             onClick={() => setEditPeriodOpen(true)}
             className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium flex items-center gap-2"
@@ -149,7 +185,7 @@ const OperatorPeriodDetailPage = () => {
         </div>
       </div>
 
-      <ErrorBox>{detailError}</ErrorBox>
+      <ErrorBox>{detailError || toggleError}</ErrorBox>
 
       {/* ===== Призы ===== */}
       <section className="space-y-4">
@@ -160,6 +196,13 @@ const OperatorPeriodDetailPage = () => {
           addLabel="Добавить приз"
           onAdd={() => setPrizeModal({ prize: null })}
         />
+
+        {prizesCost > 0 && (
+          <p className="text-sm text-gray-500">
+            Стоимость призов: <span className="font-semibold text-gray-800">{money(prizesCost)}</span>
+            <span className="text-gray-400"> — попадёт в расходы оператора за месяц окончания периода</span>
+          </p>
+        )}
 
         {prizes.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm border border-dashed border-gray-300 p-10 text-center text-sm text-gray-400">
@@ -189,6 +232,9 @@ const OperatorPeriodDetailPage = () => {
                 </div>
                 <div className="p-4 flex-1 flex flex-col">
                   <h4 className="font-semibold text-gray-800">{prize.title}</h4>
+                  {prize.cost != null && prize.cost !== '' && (
+                    <p className="text-xs text-gray-500 mt-0.5">Стоимость: {money(Number(prize.cost))}</p>
+                  )}
                   {prize.description && (
                     <p className="text-sm text-gray-500 mt-1 line-clamp-3">{prize.description}</p>
                   )}
@@ -293,6 +339,7 @@ const OperatorPeriodDetailPage = () => {
       {editPeriodOpen && (
         <OperatorPeriodModal
           period={period}
+          prizesCount={prizes.length}
           onSave={(data) => dispatch(updateOperatorPeriod({ id: period.id, ...data })).unwrap()}
           onClose={() => setEditPeriodOpen(false)}
         />
@@ -344,7 +391,9 @@ const OperatorPeriodDetailPage = () => {
             confirm.type === 'period'
               ? `Период «${period.name}» будет удалён вместе со всеми призами (${prizes.length}), победителями (${winners.length}) и их фото. Это действие нельзя отменить.`
               : confirm.type === 'prize'
-                ? `Приз «${confirm.item.title}» и его фото будут удалены.`
+                ? `Приз «${confirm.item.title}» и его фото будут удалены.${
+                    period.is_published && prizes.length === 1 ? ' Это последний приз включённого периода — сначала выключите период.' : ''
+                  }`
                 : `Победитель ${formatMsisdn(confirm.item.msisdn)}${confirm.item.name ? ` (${confirm.item.name})` : ''} будет удалён.`
           }
           loading={deleting}

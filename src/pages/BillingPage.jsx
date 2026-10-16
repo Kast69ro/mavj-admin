@@ -20,6 +20,88 @@ import {
 } from "../utils/utils";
 import { fetchBilling } from "../features/biling/biling";
 import { fetchOperators } from "../features/operators/operators";
+import { fetchAllFinance } from "../features/operatorContent/operatorContentApi";
+import FinanceSummary from "../components/FinanceSummary";
+import { OPERATOR_COLORS } from "../utils/operatorColors";
+
+// Чистая прибыль по всем включённым операторам за те же даты, что и биллинг
+const NetProfitSection = ({ dateFrom, dateTo }) => {
+  const dispatch = useDispatch();
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!dateFrom || !dateTo) return;
+    let cancelled = false;
+    setError(null);
+    dispatch(fetchAllFinance({ date_from: dateFrom, date_to: dateTo }))
+      .unwrap()
+      .then((res) => !cancelled && setData(res))
+      .catch((e) => !cancelled && setError(e));
+    return () => {
+      cancelled = true;
+    };
+  }, [dispatch, dateFrom, dateTo]);
+
+  if (!data && !error) return null;
+
+  const operators = data?.operators || [];
+  const m = (v) => money(Number(v) || 0);
+
+  return (
+    <section className="space-y-4">
+      <h3 className="text-lg font-semibold text-gray-800">Чистая прибыль</h3>
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">{error}</div>
+      )}
+
+      {operators.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+          <table className="w-full text-sm min-w-[720px]">
+            <thead>
+              <tr className="bg-gray-50">
+                {["Оператор", "Выручка", "Доля оператора", "Наша валовая", "Расходы", "Чистая прибыль"].map((h, i) => (
+                  <th
+                    key={h}
+                    className={`px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide ${i ? "text-right" : "text-left"}`}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {operators.map((o) => {
+                const opCode = o.operator ?? o.code;
+                const net = Number(o.net_profit) || 0;
+                return (
+                  <tr key={opCode}>
+                    <td className="px-4 py-3 font-medium text-gray-900">
+                      <span className="inline-flex items-center gap-2">
+                        <span
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: (OPERATOR_COLORS[opCode] ?? OPERATOR_COLORS.default).bg }}
+                        />
+                        {o.name ?? opCode}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right text-gray-700">{m(o.revenue)}</td>
+                    <td className="px-4 py-3 text-right text-gray-700">{m(o.operator_share)}</td>
+                    <td className="px-4 py-3 text-right text-gray-700">{m(o.our_gross)}</td>
+                    <td className="px-4 py-3 text-right text-gray-700">{m(o.expenses)}</td>
+                    <td className={`px-4 py-3 text-right font-semibold ${net < 0 ? "text-red-600" : "text-gray-900"}`}>{m(net)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {data?.total && <FinanceSummary data={data.total} />}
+    </section>
+  );
+};
 
 const StatCard = ({ label, value, icon: Icon, color = "blue" }) => (
   <div
@@ -327,6 +409,8 @@ const BillingPage = () => {
               </table>
             </div>
           </div>
+
+          <NetProfitSection dateFrom={dateFrom} dateTo={dateTo} />
         </>
       )}
     </div>
