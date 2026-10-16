@@ -72,8 +72,10 @@ const FilterableHeader = ({ label, options, value, onChange }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const activeOption = options.find((o) => o.value === value);
-  const isFiltered = Boolean(value);
+  // value — массив выбранных значений; пустой массив = без фильтра
+  const isFiltered = value.length > 0;
+  const toggle = (v) =>
+    onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]);
 
   return (
     <th className="px-4 py-3 relative select-none" ref={ref}>
@@ -88,36 +90,50 @@ const FilterableHeader = ({ label, options, value, onChange }) => {
           className={`transition-transform ${open ? "rotate-180" : ""}`}
         />
         {isFiltered && (
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+          <span className="min-w-[16px] h-4 px-1 rounded-full bg-blue-500 text-white text-[10px] leading-4 text-center">
+            {value.length}
+          </span>
         )}
       </button>
 
       {open && (
         <div className="absolute z-10 top-full left-4 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 normal-case font-normal text-gray-700">
-          {options.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => {
-                onChange(opt.value);
-                setOpen(false);
-              }}
-              className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm text-left hover:bg-gray-50"
-            >
-              <span className="flex items-center gap-2">
+          {options.map((opt) => {
+            const checked = value.includes(opt.value);
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => toggle(opt.value)}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-gray-50"
+              >
+                <span
+                  className={`w-4 h-4 shrink-0 rounded border flex items-center justify-center ${
+                    checked ? "bg-blue-600 border-blue-600" : "border-gray-300"
+                  }`}
+                >
+                  {checked && <Check size={12} className="text-white" />}
+                </span>
                 {opt.color && (
                   <span
-                    className="w-2 h-2 rounded-full"
+                    className="w-2 h-2 rounded-full shrink-0"
                     style={{ backgroundColor: opt.color }}
                   />
                 )}
                 {opt.label}
-              </span>
-              {value === opt.value && (
-                <Check size={14} className="text-blue-600" />
-              )}
+              </button>
+            );
+          })}
+          <div className="border-t border-gray-100 mt-1 pt-1">
+            <button
+              type="button"
+              disabled={!isFiltered}
+              onClick={() => onChange([])}
+              className="w-full px-3 py-2 text-sm text-left text-gray-500 hover:bg-gray-50 disabled:text-gray-300 disabled:hover:bg-transparent"
+            >
+              Сбросить
             </button>
-          ))}
+          </div>
         </div>
       )}
     </th>
@@ -146,8 +162,8 @@ const SortableHeader = ({ label, sortKey, currentSort, currentDir, onSort }) => 
 const SubscribersPage = () => {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [operatorFilter, setOperatorFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [operatorFilter, setOperatorFilter] = useState([]);
+  const [statusFilter, setStatusFilter] = useState([]);
   const [billedToday, setBilledToday] = useState(false);
   const [sortBy, setSortBy] = useState("created_at");
   const [sortDir, setSortDir] = useState("desc");
@@ -179,14 +195,11 @@ const SubscribersPage = () => {
     return acc;
   }, {});
 
-  const operatorOptions = [
-    { value: "", label: "Все операторы" },
-    ...(operatorsInfo ?? []).map((op) => ({
-      value: op.code,
-      label: op.name,
-      color: (OPERATOR_COLORS[op.code] ?? OPERATOR_COLORS.default).bg,
-    })),
-  ];
+  const operatorOptions = (operatorsInfo ?? []).map((op) => ({
+    value: op.code,
+    label: op.name,
+    color: (OPERATOR_COLORS[op.code] ?? OPERATOR_COLORS.default).bg,
+  }));
 
   useEffect(() => {
     if (operatorsInfo.length === 0) {
@@ -198,8 +211,8 @@ const SubscribersPage = () => {
     dispatch(
       fetchSubscribers({
         search,
-        operator: operatorFilter || undefined,
-        status: statusFilter || undefined,
+        operator: operatorFilter.join(",") || undefined,
+        status: statusFilter.join(",") || undefined,
         billedToday,
         sortBy,
         sortDir,
@@ -285,7 +298,7 @@ const SubscribersPage = () => {
                 <th className="px-4 py-3">Сервис</th>
                 <FilterableHeader
                   label="Статус"
-                  options={statusOptions.map((o) => ({
+                  options={statusOptions.filter((o) => o.value).map((o) => ({
                     ...o,
                     color: statusConfig[o.value]?.dot,
                   }))}

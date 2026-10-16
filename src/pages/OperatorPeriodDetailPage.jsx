@@ -1,9 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Plus, Pencil, Trash2, ChevronLeft, Camera, Gift, Trophy, User, Calendar } from 'lucide-react';
 import {
-  fetchContentOperators,
   fetchPeriodDetail,
   updateOperatorPeriod,
   deleteOperatorPeriod,
@@ -37,11 +36,11 @@ const SectionHeader = ({ icon, title, count, onAdd, addLabel }) => (
   </div>
 );
 
-const OperatorPeriodPage = () => {
-  const { periodId } = useParams();
+const OperatorPeriodDetailPage = () => {
+  const { code, periodId } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { operators, detail, detailLoading, detailError } = useSelector((state) => state.operatorContent);
+  const { detail, detailLoading, detailError } = useSelector((state) => state.operatorContent);
 
   const [editPeriodOpen, setEditPeriodOpen] = useState(false);
   const [prizeModal, setPrizeModal] = useState(null); // { prize } | { prize: null }
@@ -52,15 +51,11 @@ const OperatorPeriodPage = () => {
   const [deleteError, setDeleteError] = useState(null);
 
   useEffect(() => {
-    if (operators.length === 0) dispatch(fetchContentOperators());
-  }, [dispatch, operators.length]);
-
-  useEffect(() => {
     dispatch(fetchPeriodDetail(periodId));
   }, [dispatch, periodId]);
 
   const period = detail?.period;
-  const operator = operators.find((o) => o.code === period?.operator);
+  const periodsPath = `/operator-content/${code}/periods`;
 
   const prizes = useMemo(
     () => [...(detail?.prizes || [])].sort((a, b) => (a.sort_order - b.sort_order) || (a.id - b.id)),
@@ -84,7 +79,7 @@ const OperatorPeriodPage = () => {
     try {
       if (confirm.type === 'period') {
         await dispatch(deleteOperatorPeriod(period.id)).unwrap();
-        navigate(`/operator-content/${period.operator}`, { replace: true });
+        navigate(periodsPath, { replace: true });
         return;
       }
       if (confirm.type === 'prize') {
@@ -103,8 +98,8 @@ const OperatorPeriodPage = () => {
   if (!period) {
     return (
       <div className="space-y-6">
-        <Link to="/operator-content" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800">
-          <ChevronLeft size={16} /> Операторы
+        <Link to={periodsPath} className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800">
+          <ChevronLeft size={16} /> Периоды
         </Link>
         {detailLoading && <p className="text-sm text-gray-400">Загрузка…</p>}
         <ErrorBox>{detailError}</ErrorBox>
@@ -112,17 +107,18 @@ const OperatorPeriodPage = () => {
     );
   }
 
+  // Период другого оператора — переходим на правильный адрес, чтобы сайдбар и вкладки совпадали
+  if (period.operator !== code) {
+    return <Navigate to={`/operator-content/${period.operator}/periods/${period.id}`} replace />;
+  }
+
   const phase = getPeriodPhase(period, today());
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-1 text-sm text-gray-500">
-        <Link to="/operator-content" className="hover:text-gray-800">Операторы</Link>
-        <span>/</span>
-        <Link to={`/operator-content/${period.operator}`} className="inline-flex items-center gap-1 hover:text-gray-800">
-          <ChevronLeft size={16} /> {operator?.name || period.operator}
-        </Link>
-      </div>
+      <Link to={periodsPath} className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800">
+        <ChevronLeft size={16} /> Периоды
+      </Link>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-wrap justify-between items-start gap-4">
         <div>
@@ -361,4 +357,4 @@ const OperatorPeriodPage = () => {
   );
 };
 
-export default OperatorPeriodPage;
+export default OperatorPeriodDetailPage;

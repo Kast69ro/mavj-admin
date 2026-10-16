@@ -25,9 +25,11 @@ import SmsPage from "./pages/SmsPage";
 import UssdPage from "./pages/UssdPage";
 import UsersPage from "./pages/UsersPage";
 import RulesPage from "./pages/RulesPage";
-import OperatorContentPage from "./pages/OperatorContentPage";
-import OperatorPeriodsPage from "./pages/OperatorPeriodsPage";
-import OperatorPeriodPage from "./pages/OperatorPeriodPage";
+import OperatorLayout, { OperatorsIndexRedirect } from "./pages/OperatorLayout";
+import OperatorPeriodListPage from "./pages/OperatorPeriodListPage";
+import OperatorPeriodDetailPage from "./pages/OperatorPeriodDetailPage";
+import OperatorSitePage from "./pages/OperatorSitePage";
+import OperatorsNav from "./components/OperatorsNav";
 import { Role } from "./features/auth/authApi";
 import { logout } from "./features/auth/authSlice";
 
@@ -44,7 +46,7 @@ const NAV_ITEMS = [
   { path: "/ussd", label: "USSD", icon: <span>💬</span>, permission: "ussd_templates" },
   { path: "/users", label: "Пользователи", icon: <span>🔑</span>, superadminOnly: true },
   { path: "/rules", label: "Правила (PDF)", icon: <span>📄</span>, permission: "rules" },
-  { path: "/operator-content", label: "Операторы", icon: <span>📱</span>, permission: "operators" },
+  { path: "/operator-content", label: "Операторы", icon: <span>📱</span>, permission: "operators", accordion: "operators" },
 ];
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -92,7 +94,10 @@ const Sidebar = ({ isOpen, onClose }) => {
             (!item.permission ||
               user?.is_superadmin ||
               user?.permissions?.includes(item.permission))
-        ).map((item) => (
+        ).map((item) =>
+          item.accordion === "operators" ? (
+            <OperatorsNav key={item.path} icon={item.icon} label={item.label} onNavigate={onClose} />
+          ) : (
           <NavLink
             key={item.path}
             to={item.path}
@@ -109,7 +114,8 @@ const Sidebar = ({ isOpen, onClose }) => {
             {item.icon}
             <span className="flex-1">{item.label}</span>
           </NavLink>
-        ))}
+          )
+        )}
       </nav>
 
       <div className="px-3 pb-5 pt-2 border-t border-slate-700 space-y-0.5">
@@ -196,9 +202,13 @@ const Layout = () => {
             <Route path="lottery" element={<LotteryPage />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="rules" element={<RulesPage />} />
-            <Route path="operator-content" element={<OperatorContentPage />} />
-            <Route path="operator-content/:code" element={<OperatorPeriodsPage />} />
-            <Route path="operator-content/periods/:periodId" element={<OperatorPeriodPage />} />
+            <Route path="operator-content" element={<OperatorsIndexRedirect />} />
+            <Route path="operator-content/:code" element={<OperatorLayout />}>
+              <Route index element={<Navigate to="periods" replace />} />
+              <Route path="periods" element={<OperatorPeriodListPage />} />
+              <Route path="periods/:periodId" element={<OperatorPeriodDetailPage />} />
+              <Route path="site" element={<OperatorSitePage />} />
+            </Route>
             <Route
               path="*"
               element={

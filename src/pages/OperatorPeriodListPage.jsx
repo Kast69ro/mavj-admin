@@ -1,25 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Eye, EyeOff, Gift, Trophy } from 'lucide-react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
+import { Plus, Pencil, Trash2, ChevronRight, Eye, EyeOff, Gift, Trophy } from 'lucide-react';
 import {
-  fetchContentOperators,
   fetchOperatorPeriods,
   createOperatorPeriod,
   updateOperatorPeriod,
   deleteOperatorPeriod,
 } from '../features/operatorContent/operatorContentApi';
-import { OPERATOR_COLORS } from '../utils/operatorColors';
-import { formatDateOnly, mediaUrl, today } from '../utils/utils';
+import { formatDateOnly, today } from '../utils/utils';
 import { getPeriodPhase } from '../utils/helpers';
 import OperatorPeriodModal from '../components/OperatorPeriodModal';
 import { ConfirmModal, ErrorBox } from '../components/ContentModal';
 
-const OperatorPeriodsPage = () => {
-  const { code } = useParams();
+const OperatorPeriodListPage = () => {
+  const { operator } = useOutletContext();
+  const { code } = operator;
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { operators, periods, periodsOperator, periodsLoading, periodsError } = useSelector(
+  const { periods, periodsOperator, periodsLoading, periodsError } = useSelector(
     (state) => state.operatorContent
   );
 
@@ -31,15 +30,9 @@ const OperatorPeriodsPage = () => {
   const [actionError, setActionError] = useState(null);
 
   useEffect(() => {
-    if (operators.length === 0) dispatch(fetchContentOperators());
-  }, [dispatch, operators.length]);
-
-  useEffect(() => {
     dispatch(fetchOperatorPeriods(code));
   }, [dispatch, code]);
 
-  const operator = operators.find((o) => o.code === code);
-  const colors = OPERATOR_COLORS[code] ?? OPERATOR_COLORS.default;
   const rows = periodsOperator === code ? periods : [];
   const todayISO = today();
 
@@ -67,29 +60,8 @@ const OperatorPeriodsPage = () => {
 
   return (
     <div className="space-y-6">
-      <Link to="/operator-content" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800">
-        <ChevronLeft size={16} /> Операторы
-      </Link>
-
       <div className="flex flex-wrap justify-between items-center gap-3">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-12 h-12 rounded-xl border bg-white flex items-center justify-center overflow-hidden"
-            style={{ borderColor: colors.bg }}
-          >
-            {operator?.logo_url ? (
-              <img src={mediaUrl(operator.logo_url)} alt="" className="w-full h-full object-contain p-1" />
-            ) : (
-              <span className="font-bold text-lg" style={{ color: colors.active }}>
-                {(operator?.name || code).charAt(0).toUpperCase()}
-              </span>
-            )}
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800">{operator?.name || code}</h2>
-            <p className="text-sm text-gray-500">Периоды розыгрышей</p>
-          </div>
-        </div>
+        <h3 className="text-lg font-semibold text-gray-800">Периоды розыгрышей</h3>
         <button
           onClick={() => setShowCreate(true)}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center gap-2"
@@ -134,7 +106,7 @@ const OperatorPeriodsPage = () => {
               return (
                 <tr
                   key={p.id}
-                  onClick={() => navigate(`/operator-content/periods/${p.id}`)}
+                  onClick={() => navigate(`/operator-content/${code}/periods/${p.id}`)}
                   className="border-b border-gray-100 last:border-0 hover:bg-gray-50 cursor-pointer"
                 >
                   <td className="px-4 py-3 text-sm font-medium text-gray-800">{p.name}</td>
@@ -172,7 +144,7 @@ const OperatorPeriodsPage = () => {
                         <Trash2 size={16} />
                       </button>
                       <button
-                        onClick={() => navigate(`/operator-content/periods/${p.id}`)}
+                        onClick={() => navigate(`/operator-content/${code}/periods/${p.id}`)}
                         title="Призы и победители"
                         className="p-1.5 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded"
                       >
@@ -213,4 +185,4 @@ const OperatorPeriodsPage = () => {
   );
 };
 
-export default OperatorPeriodsPage;
+export default OperatorPeriodListPage;
