@@ -3,8 +3,8 @@ import { FileText, Upload, ExternalLink, Calendar, HardDrive } from 'lucide-reac
 import { axiosRequest, defaultAxios } from '../utils/axiosInstance';
 import { formatDate } from '../utils/utils';
 
-const OPERATOR_LABEL = { babilon: 'Babilon Mobile', megafon: 'MegaFon' };
-const OPERATORS = ['babilon', 'megafon'];
+const OPERATOR_LABEL = { babilon: 'Babilon Mobile', megafon: 'MegaFon', tcell: 'Tcell' };
+const OPERATORS = ['babilon', 'megafon', 'tcell'];
 
 const formatSize = (bytes) => {
   if (!bytes) return '—';
