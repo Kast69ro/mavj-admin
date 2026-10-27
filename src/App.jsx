@@ -18,7 +18,6 @@ import ReportsPage from "./pages/ReportsPage";
 import QuestionsPage from "./pages/QuestionsPage";
 import WinnersPage from "./pages/WinnersPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
-import StatisticsPage from "./pages/StatisticsPage";
 import SettingsPage from "./pages/SettingsPage";
 import MonitoringPage from "./pages/MonitoringPage";
 import BillingPage from "./pages/BillingPage";
@@ -46,8 +45,7 @@ const NAV_ITEMS = [
   { path: "/questions", label: "Вопросы", icon: <Upload size={18} />, permission: "quiz" },
   { path: "/lottery", label: "Лотерея", icon: <span>🎰</span>, permission: "periods" },
   { path: "/analytics", label: "Аналитика", icon: <BarChart3 size={18} />, permission: "analytics" },
-  { path: "/statistics", label: "Статистика", icon: <BarChart3 size={18} />, permission: "analytics" },
-  { path: "/monitoring", label: "Мониторинг", icon: <span>📡</span>, superadminOnly: true },
+  { path: "/monitoring", label: "Мониторинг", icon: <span>📡</span>, permission: "monitoring" },
   { path: "/billing", label: "Биллинг", icon: <span>💰</span>, permission: "billing" },
   { path: "/sms", label: "SMS", icon: <span>💬</span>, permission: "sms_send" },
   { path: "/ussd", label: "USSD", icon: <span>💬</span>, permission: "ussd_templates" },
@@ -201,7 +199,6 @@ const Layout = () => {
             <Route path="questions" element={<QuestionsPage />} />
             <Route path="winners" element={<WinnersPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
-            <Route path="statistics" element={<StatisticsPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="monitoring" element={<MonitoringPage />} />
             <Route path="billing" element={<BillingPage />} />

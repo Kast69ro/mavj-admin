@@ -3,26 +3,18 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchOperators } from "../features/operators/operators";
 import { axiosRequest } from "../utils/axiosInstance";
 
-const rankRowClass = (i) => {
-  if (i === 0) return "bg-gradient-to-r from-yellow-100 via-yellow-50 to-transparent";
-  if (i === 1) return "bg-gradient-to-r from-gray-200 via-gray-100 to-transparent";
-  if (i === 2) return "bg-gradient-to-r from-orange-100 via-orange-50 to-transparent";
-  return "";
-};
-
-const rankMedal = (i) => (i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1);
-
-const DEFAULT_OPERATOR = "babilon";
+const QUARTER_LABELS = { 1: "Янв–Мар", 2: "Апр–Июн", 3: "Июл–Сен", 4: "Окт–Дек" };
 
 const MainPage = () => {
-  const [selectedOperator, setSelectedOperator] = useState(DEFAULT_OPERATOR);
+  const [selectedOperator, setSelectedOperator] = useState("Tcell");
   const { info } = useSelector((state) => state.operators);
   const dispatch = useDispatch();
 
   // ===== Победители прошлых розыгрышей =====
-  const [periodsList, setPeriodsList] = useState([]);
-  const [periodId, setPeriodId] = useState("");
-  const [completedPeriods, setCompletedPeriods] = useState([]);
+  const [availableYears, setAvailableYears] = useState([]);
+  const [year, setYear] = useState("");
+  const [quarter, setQuarter] = useState("");
+  const [periods, setPeriods] = useState([]);
   const [loadingWinners, setLoadingWinners] = useState(false);
   const [winnersError, setWinnersError] = useState(null);
 
@@ -31,26 +23,30 @@ const MainPage = () => {
   const [loadingTop, setLoadingTop] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchOperators());
-  }, [dispatch]);
-
-  // Список периодов — реальные периоды с бэка (для дропдауна)
-  useEffect(() => {
-    axiosRequest
-      .get("/periods")
-      .then(({ data }) => setPeriodsList(data.periods || []))
-      .catch(() => setPeriodsList([]));
-  }, []);
-
-  // Топ-10 по баллам — с фильтром по оператору
-  useEffect(() => {
     setLoadingTop(true);
     axiosRequest
-      .get("/subscribers/top", { params: { limit: 10, operator: selectedOperator || undefined } })
+      .get("/subscribers/top", { params: { limit: 10 } })
       .then(({ data }) => setTopSubscribers(data.top || []))
       .catch(() => setTopSubscribers([]))
       .finally(() => setLoadingTop(false));
-  }, [selectedOperator]);
+  }, []);
+
+  useEffect(() => {
+    dispatch(fetchOperators());
+  }, [dispatch]);
+
+  // Список доступных лет — берём из всех периодов, а не хардкодим
+  useEffect(() => {
+    axiosRequest
+      .get("/periods")
+      .then(({ data }) => {
+        const years = Array.from(
+          new Set((data.periods || []).map((p) => new Date(p.start_date).getFullYear()))
+        ).sort((a, b) => b - a);
+        setAvailableYears(years);
+      })
+      .catch(() => setAvailableYears([]));
+  }, []);
 
   const loadWinners = useCallback(() => {
     setLoadingWinners(true);
@@ -58,15 +54,15 @@ const MainPage = () => {
     axiosRequest
       .get("/periods/completed", {
         params: {
-          period_id: periodId || undefined,
-          operator: selectedOperator || undefined,
+          year: year || undefined,
+          quarter: quarter || undefined,
           top_limit: 5,
         },
       })
-      .then(({ data }) => setCompletedPeriods(data.periods || []))
+      .then(({ data }) => setPeriods(data.periods || []))
       .catch(() => setWinnersError("Не удалось загрузить победителей"))
       .finally(() => setLoadingWinners(false));
-  }, [periodId, selectedOperator]);
+  }, [year, quarter]);
 
   useEffect(() => {
     loadWinners();
@@ -79,6 +75,8 @@ const MainPage = () => {
       {/* Operator selector */}
       <div className="grid grid-cols-6 gap-3">
         {info?.map((op) => {
+          // Цвета берём напрямую с бэка (color_bg / color_active),
+          // с дефолтом на случай, если бэк их не прислал.
           const colors = {
             bg: op.color_bg ?? "#9ca3af",
             active: op.color_active ?? "#6b7280",
@@ -118,31 +116,41 @@ const MainPage = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h3 className="text-lg font-semibold">🏆 Победители прошлых розыгрышей</h3>
-          <select
-            value={periodId}
-            onChange={(e) => setPeriodId(e.target.value)}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm min-w-[220px]"
-          >
-            <option value="">Все периоды</option>
-            {periodsList.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name} ({p.start_date} — {p.end_date})
-              </option>
-            ))}
-          </select>
+          <div className="flex gap-2">
+            <select
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+            >
+              <option value="">Все годы</option>
+              {availableYears.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <select
+              value={quarter}
+              onChange={(e) => setQuarter(e.target.value)}
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+            >
+              <option value="">Все кварталы</option>
+              {Object.entries(QUARTER_LABELS).map(([q, label]) => (
+                <option key={q} value={q}>{`Q${q} (${label})`}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {loadingWinners && <p className="text-sm text-gray-400 py-6 text-center">Загрузка…</p>}
         {!loadingWinners && winnersError && (
           <p className="text-sm text-red-600 py-6 text-center">{winnersError}</p>
         )}
-        {!loadingWinners && !winnersError && completedPeriods.length === 0 && (
+        {!loadingWinners && !winnersError && periods.length === 0 && (
           <p className="text-sm text-gray-400 py-6 text-center">Завершённых розыгрышей за этот период нет</p>
         )}
 
         {!loadingWinners &&
           !winnersError &&
-          completedPeriods.map(({ period, winners }) => (
+          periods.map(({ period, winners }) => (
             <div key={period.id} className="mb-6 last:mb-0">
               <div className="flex items-center justify-between mb-2">
                 <p className="font-semibold text-gray-800">{period.name}</p>
@@ -168,8 +176,10 @@ const MainPage = () => {
                   </thead>
                   <tbody>
                     {winners.map((w, i) => (
-                      <tr key={w.msisdn} className={`border-b border-gray-100 ${rankRowClass(i)}`}>
-                        <td className="px-3 py-2">{rankMedal(i)}</td>
+                      <tr key={w.msisdn} className="border-b border-gray-100">
+                        <td className="px-3 py-2">
+                          {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
+                        </td>
                         <td className="px-3 py-2 font-mono">{w.msisdn}</td>
                         <td className="px-3 py-2 text-gray-500">{w.operator || "—"}</td>
                         <td className="px-3 py-2 text-right font-semibold text-blue-700">{w.points}</td>
@@ -210,8 +220,10 @@ const MainPage = () => {
               </thead>
               <tbody>
                 {topSubscribers.map((s, i) => (
-                  <tr key={s.msisdn} className={`border-b border-gray-100 ${rankRowClass(i)}`}>
-                    <td className="px-3 py-2">{rankMedal(i)}</td>
+                  <tr key={s.msisdn} className="border-b border-gray-100">
+                    <td className="px-3 py-2">
+                      {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
+                    </td>
                     <td className="px-3 py-2 font-mono">{s.msisdn}</td>
                     <td className="px-3 py-2 text-gray-500">{s.operator || "—"}</td>
                     <td className="px-3 py-2 text-right font-semibold text-blue-700">{s.points}</td>

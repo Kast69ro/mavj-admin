@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { TrendingUp, Package, Wallet, ChevronRight, ChevronDown } from "lucide-react";
+import { TrendingUp, Package, Wallet } from "lucide-react";
 import {
   getPresetRange,
   nf,
@@ -20,8 +20,6 @@ import {
 } from "../utils/utils";
 import { fetchBilling } from "../features/biling/biling";
 import { fetchOperators } from "../features/operators/operators";
-import { axiosRequest } from "../utils/axiosInstance";
-
 import { fetchAllFinance } from "../features/operatorContent/operatorContentApi";
 import FinanceSummary from "../components/FinanceSummary";
 import { OPERATOR_COLORS } from "../utils/operatorColors";
@@ -125,77 +123,6 @@ const StatCard = ({ label, value, icon: Icon, color = "blue" }) => (
   </div>
 );
 
-const TrendArrow = ({ diff }) => {
-  if (diff === null || diff === undefined) return <span className="text-gray-300 text-xs">—</span>;
-  if (diff > 0.001) return <span className="text-green-600 font-bold" title={`+${diff.toFixed(2)} TJS`}>▲</span>;
-  if (diff < -0.001) return <span className="text-red-600 font-bold" title={`${diff.toFixed(2)} TJS`}>▼</span>;
-  return <span className="text-gray-400 font-bold" title="Без изменений">=</span>;
-};
-
-const withDiffs = (list) =>
-  list.map((item, i) => ({
-    ...item,
-    diff: i + 1 < list.length ? item.total_amount - list[i + 1].total_amount : null,
-  }));
-
-const buildYearGroups = (monthsWithDiff) => {
-  const map = new Map();
-  const order = [];
-  monthsWithDiff.forEach((m) => {
-    if (!map.has(m.year)) {
-      map.set(m.year, { year: m.year, months: [], total_amount: 0 });
-      order.push(m.year);
-    }
-    const g = map.get(m.year);
-    g.months.push(m);
-    g.total_amount += m.total_amount;
-  });
-  const groups = order.map((y) => map.get(y)).sort((a, b) => b.year - a.year);
-  groups.forEach((g, i) => {
-    g.diff = i + 1 < groups.length ? g.total_amount - groups[i + 1].total_amount : null;
-  });
-  return groups;
-};
-
-const DailyRows = ({ days, loading }) => (
-  <table className="w-full text-sm">
-    <thead>
-      <tr className="bg-gray-50 sticky top-0">
-        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Дата</th>
-        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Основных списаний</th>
-        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Сумма, TJS</th>
-        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Доп-пакетов</th>
-        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Сумма, TJS</th>
-        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Итого, TJS</th>
-      </tr>
-    </thead>
-    <tbody className="divide-y divide-gray-100">
-      {(!days || days.length === 0) && (
-        <tr>
-          <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
-            {loading ? "Загрузка…" : "Нет данных за выбранный период"}
-          </td>
-        </tr>
-      )}
-      {days?.map((d, i) => (
-        <tr key={d.date} className={`transition-colors hover:bg-blue-50 ${i % 2 === 1 ? "bg-gray-50/50" : ""}`}>
-          <td className="px-4 py-3 font-medium text-gray-900">
-            <span className="inline-flex items-center gap-2">
-              {d.date}
-              <TrendArrow diff={d.diff} />
-            </span>
-          </td>
-          <td className="px-4 py-3 text-right text-gray-700">{nf(d.subscription_count)}</td>
-          <td className="px-4 py-3 text-right text-gray-700">{d.subscription_amount.toFixed(2)}</td>
-          <td className="px-4 py-3 text-right text-gray-700">{nf(d.extra_count)}</td>
-          <td className="px-4 py-3 text-right text-gray-700">{d.extra_amount.toFixed(2)}</td>
-          <td className="px-4 py-3 text-right font-semibold text-gray-900">{d.total_amount.toFixed(2)}</td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-);
-
 const BillingPage = () => {
   const dispatch = useDispatch();
   const todayRange = getPresetRange("today");
@@ -207,14 +134,6 @@ const BillingPage = () => {
 
   const { data, loading, error } = useSelector((state) => state.billing);
   const { info } = useSelector((state) => state.operators);
-
-  // ===== "Всё время": годы/месяцы =====
-  const [monthlyRaw, setMonthlyRaw] = useState([]);
-  const [loadingMonthly, setLoadingMonthly] = useState(false);
-  const [expandedYears, setExpandedYears] = useState(() => new Set());
-  const [expandedMonths, setExpandedMonths] = useState(() => new Set());
-  const [monthDays, setMonthDays] = useState({}); // key "YYYY-MM" -> days[]
-  const [loadingMonthDays, setLoadingMonthDays] = useState({});
 
   useEffect(() => {
     dispatch(fetchOperators());
@@ -231,53 +150,8 @@ const BillingPage = () => {
     );
   }, [dateFrom, dateTo, operator, dispatch]);
 
-  useEffect(() => {
-    if (activePreset !== "all") return;
-    setLoadingMonthly(true);
-    axiosRequest
-      .get("/billing/monthly", { params: { date_from: dateFrom, date_to: dateTo, operator: operator || undefined } })
-      .then(({ data }) => setMonthlyRaw(data.months || []))
-      .catch(() => setMonthlyRaw([]))
-      .finally(() => setLoadingMonthly(false));
-  }, [activePreset, operator]);
-
-  const monthsWithDiff = useMemo(() => withDiffs(monthlyRaw), [monthlyRaw]);
-  const yearGroups = useMemo(() => buildYearGroups(monthsWithDiff), [monthsWithDiff]);
-  const dailyWithDiff = useMemo(() => withDiffs(data?.days || []), [data]);
-
   const periodSelected = Boolean(dateFrom && dateTo);
   const operatorOptions = useMemo(() => buildOperatorOptions(info), [info]);
-
-  const toggleYear = (year) => {
-    setExpandedYears((prev) => {
-      const next = new Set(prev);
-      next.has(year) ? next.delete(year) : next.add(year);
-      return next;
-    });
-  };
-
-  const toggleMonth = (m) => {
-    const key = m.label;
-    setExpandedMonths((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-        if (!monthDays[key]) {
-          setLoadingMonthDays((p) => ({ ...p, [key]: true }));
-          axiosRequest
-            .get("/billing/daily", {
-              params: { date_from: m.date_from, date_to: m.date_to, operator: operator || undefined },
-            })
-            .then(({ data }) => setMonthDays((p) => ({ ...p, [key]: data.days || [] })))
-            .catch(() => setMonthDays((p) => ({ ...p, [key]: [] })))
-            .finally(() => setLoadingMonthDays((p) => ({ ...p, [key]: false })));
-        }
-      }
-      return next;
-    });
-  };
 
   const handlePresetClick = (key) => {
     setActivePreset(key);
@@ -304,11 +178,9 @@ const BillingPage = () => {
   };
 
   const handleManualDateChange = (setter) => (e) => {
-    setActivePreset(null);
+    setActivePreset(null); // custom range, no preset highlighted
     setter(e.target.value);
   };
-
-  const MONTH_NAMES = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"];
 
   return (
     <div className="space-y-6">
@@ -317,14 +189,18 @@ const BillingPage = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="space-y-2">
-            <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">Период</p>
+            <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+              Период
+            </p>
             <div className="flex flex-wrap gap-2">
               {PERIOD_PRESETS.map((p) => (
                 <button
                   key={p.key}
                   type="button"
                   onClick={() => handlePresetClick(p.key)}
-                  className={`${pillBase} ${activePreset === p.key ? pillActive : pillInactive}`}
+                  className={`${pillBase} ${
+                    activePreset === p.key ? pillActive : pillInactive
+                  }`}
                 >
                   {p.label}
                 </button>
@@ -333,18 +209,32 @@ const BillingPage = () => {
           </div>
 
           <div className="space-y-2">
-            <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">Свои даты</p>
+            <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+              Свои даты
+            </p>
             <div className="flex items-center gap-2">
-              <input type="date" value={dateFrom} onChange={handleManualDateChange(setDateFrom)} className={dateInputClass} />
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={handleManualDateChange(setDateFrom)}
+                className={dateInputClass}
+              />
               <span className="text-gray-400">—</span>
-              <input type="date" value={dateTo} onChange={handleManualDateChange(setDateTo)} className={dateInputClass} />
+              <input
+                type="date"
+                value={dateTo}
+                onChange={handleManualDateChange(setDateTo)}
+                className={dateInputClass}
+              />
             </div>
           </div>
         </div>
 
         <div className="flex flex-wrap items-end justify-between gap-4 pt-1 border-t border-gray-100">
           <div className="space-y-2 pt-4">
-            <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">Компания</p>
+            <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+              Компания
+            </p>
             <div className="flex flex-wrap gap-2">
               {operatorOptions.map((o) => {
                 const selected = operator === o.value;
@@ -359,8 +249,12 @@ const BillingPage = () => {
                       onClick={() => setOperator(o.value)}
                       className={`${pillBase} ${
                         greyed
-                          ? selected ? "bg-gray-400 border-gray-400 text-white" : "bg-gray-50 border-gray-200 text-gray-400"
-                          : selected ? pillActive : pillInactive
+                          ? selected
+                            ? "bg-gray-400 border-gray-400 text-white"
+                            : "bg-gray-50 border-gray-200 text-gray-400"
+                          : selected
+                            ? pillActive
+                            : pillInactive
                       }`}
                     >
                       {o.label}
@@ -369,7 +263,13 @@ const BillingPage = () => {
                 }
 
                 return (
-                  <button key={o.value} type="button" onClick={() => setOperator(o.value)} style={style} className={`${pillBase} border`}>
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() => setOperator(o.value)}
+                    style={style}
+                    className={`${pillBase} border`}
+                  >
                     {o.label}
                   </button>
                 );
@@ -384,7 +284,9 @@ const BillingPage = () => {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">{error}</div>
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">
+          {error}
+        </div>
       )}
 
       {!periodSelected && (
@@ -396,93 +298,117 @@ const BillingPage = () => {
       {periodSelected && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <StatCard label="Основные подписки" value={money(data?.totals?.subscription_amount)} icon={TrendingUp} color="emerald" />
-            <StatCard label="Доп-пакеты" value={money(data?.totals?.extra_amount)} icon={Package} color="amber" />
-            <StatCard label="Всего заработано" value={money(data?.totals?.total_amount)} icon={Wallet} color="indigo" />
+            <StatCard
+              label="Основные подписки"
+              value={money(data?.totals?.subscription_amount)}
+              icon={TrendingUp}
+              color="emerald"
+            />
+            <StatCard
+              label="Доп-пакеты"
+              value={money(data?.totals?.extra_amount)}
+              icon={Package}
+              color="amber"
+            />
+            <StatCard
+              label="Всего заработано"
+              value={money(data?.totals?.total_amount)}
+              icon={Wallet}
+              color="indigo"
+            />
           </div>
 
-          {activePreset === "all" ? (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              {loadingMonthly && (
-                <div className="px-4 py-8 text-center text-gray-400">Загрузка…</div>
-              )}
-              {!loadingMonthly && yearGroups.length === 0 && (
-                <div className="px-4 py-8 text-center text-gray-400">Нет данных</div>
-              )}
-              {!loadingMonthly &&
-                yearGroups.map((g) => {
-                  const isYearOpen = expandedYears.has(g.year);
-                  return (
-                    <div key={g.year} className="border-b border-gray-100 last:border-0">
-                      <button
-                        onClick={() => toggleYear(g.year)}
-                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 sticky top-0">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Дата
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Основных списаний
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Сумма, TJS
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Доп-пакетов
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Сумма, TJS
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Итого, TJS
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {(!data || data.days.length === 0) && (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="px-4 py-8 text-center text-gray-400"
                       >
-                        <span className="flex items-center gap-2 font-semibold text-gray-900">
-                          {isYearOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                          {g.year}
-                        </span>
-                        <span className="flex items-center gap-2 text-sm">
-                          <TrendArrow diff={g.diff} />
-                          <span className="font-semibold text-gray-900">{g.total_amount.toFixed(2)} TJS</span>
-                        </span>
-                      </button>
-
-                      {isYearOpen && (
-                        <div className="pl-8 pb-2">
-                          {g.months.map((m) => {
-                            const isMonthOpen = expandedMonths.has(m.label);
-                            return (
-                              <div key={m.label} className="border-t border-gray-50 first:border-0">
-                                <button
-                                  onClick={() => toggleMonth(m)}
-                                  className="w-full flex items-center justify-between px-2 py-2.5 hover:bg-gray-50 transition-colors text-sm"
-                                >
-                                  <span className="flex items-center gap-2 text-gray-700">
-                                    {isMonthOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                                    {MONTH_NAMES[m.month - 1]} {m.year}
-                                    <span className="text-gray-400">· {nf(m.total_count)} операций</span>
-                                  </span>
-                                  <span className="flex items-center gap-2">
-                                    <TrendArrow diff={m.diff} />
-                                    <span className="font-medium text-gray-900">{m.total_amount.toFixed(2)} TJS</span>
-                                  </span>
-                                </button>
-                                {isMonthOpen && (
-                                  <div className="overflow-x-auto bg-gray-50/40">
-                                    <DailyRows days={monthDays[m.label]} loading={loadingMonthDays[m.label]} />
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-            </div>
-          ) : (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="overflow-x-auto">
-                <DailyRows days={dailyWithDiff} loading={loading} />
+                        {loading
+                          ? "Загрузка…"
+                          : "Нет данных за выбранный период"}
+                      </td>
+                    </tr>
+                  )}
+                  {data?.days?.map((d, i) => (
+                    <tr
+                      key={d.date}
+                      className={`transition-colors hover:bg-blue-50 ${i % 2 === 1 ? "bg-gray-50/50" : ""}`}
+                    >
+                      <td className="px-4 py-3 font-medium text-gray-900">
+                        {d.date}
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-700">
+                        {nf(d.subscription_count)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-700">
+                        {d.subscription_amount.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-700">
+                        {nf(d.extra_count)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-700">
+                        {d.extra_amount.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-right font-semibold text-gray-900">
+                        {d.total_amount.toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
                 {data?.days?.length > 0 && (
-                  <table className="w-full text-sm">
-                    <tfoot>
-                      <tr className="bg-gray-100 font-semibold border-t-2 border-gray-200">
-                        <td className="px-4 py-3 text-gray-900">Итого за период</td>
-                        <td className="px-4 py-3 text-right text-gray-900">{nf(data.totals.subscription_count)}</td>
-                        <td className="px-4 py-3 text-right text-gray-900">{data.totals.subscription_amount.toFixed(2)}</td>
-                        <td className="px-4 py-3 text-right text-gray-900">{nf(data.totals.extra_count)}</td>
-                        <td className="px-4 py-3 text-right text-gray-900">{data.totals.extra_amount.toFixed(2)}</td>
-                        <td className="px-4 py-3 text-right text-gray-900">{data.totals.total_amount.toFixed(2)}</td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                  <tfoot>
+                    <tr className="bg-gray-100 font-semibold border-t-2 border-gray-200">
+                      <td className="px-4 py-3 text-gray-900">
+                        Итого за период
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-900">
+                        {nf(data.totals.subscription_count)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-900">
+                        {data.totals.subscription_amount.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-900">
+                        {nf(data.totals.extra_count)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-900">
+                        {data.totals.extra_amount.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-900">
+                        {data.totals.total_amount.toFixed(2)}
+                      </td>
+                    </tr>
+                  </tfoot>
                 )}
-              </div>
+              </table>
             </div>
-          )}
+          </div>
 
           <NetProfitSection dateFrom={dateFrom} dateTo={dateTo} />
         </>
