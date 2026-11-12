@@ -18,13 +18,11 @@ import ReportsPage from "./pages/ReportsPage";
 import QuestionsPage from "./pages/QuestionsPage";
 import WinnersPage from "./pages/WinnersPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
-import SettingsPage from "./pages/SettingsPage";
 import MonitoringPage from "./pages/MonitoringPage";
 import BillingPage from "./pages/BillingPage";
 import SmsPage from "./pages/SmsPage";
 import UssdPage from "./pages/UssdPage";
 import UsersPage from "./pages/UsersPage";
-import RulesPage from "./pages/RulesPage";
 import OperatorLayout, { OperatorsIndexRedirect } from "./pages/OperatorLayout";
 import OperatorPeriodListPage from "./pages/OperatorPeriodListPage";
 import OperatorPeriodDetailPage from "./pages/OperatorPeriodDetailPage";
@@ -50,7 +48,6 @@ const NAV_ITEMS = [
   { path: "/sms", label: "SMS", icon: <span>💬</span>, permission: "sms_send" },
   { path: "/ussd", label: "USSD", icon: <span>💬</span>, permission: "ussd_templates" },
   { path: "/users", label: "Пользователи", icon: <span>🔑</span>, superadminOnly: true },
-  { path: "/rules", label: "Правила (PDF)", icon: <span>📄</span>, permission: "rules" },
   { path: "/operator-content", label: "Операторы", icon: <span>📱</span>, permission: "operators", accordion: "operators" },
 ];
 
@@ -124,23 +121,6 @@ const Sidebar = ({ isOpen, onClose }) => {
       </nav>
 
       <div className="px-3 pb-5 pt-2 border-t border-slate-700 space-y-0.5">
-        {(user?.is_superadmin || user?.permissions?.includes("settings")) && (
-          <NavLink
-            to="/settings"
-            onClick={onClose}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition ${
-                isActive
-                  ? "bg-white text-slate-900 font-semibold shadow-sm"
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`
-            }
-          >
-            <span>⚙️</span>
-            <span className="flex-1">Настройки</span>
-          </NavLink>
-        )}
-
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-red-600 hover:text-white transition text-sm"
@@ -199,14 +179,12 @@ const Layout = () => {
             <Route path="questions" element={<QuestionsPage />} />
             <Route path="winners" element={<WinnersPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
-            <Route path="settings" element={<SettingsPage />} />
             <Route path="monitoring" element={<MonitoringPage />} />
             <Route path="billing" element={<BillingPage />} />
             <Route path="sms" element={<SmsPage />} />
             <Route path="ussd" element={<UssdPage />} />
             <Route path="lottery" element={<LotteryPage />} />
             <Route path="users" element={<UsersPage />} />
-            <Route path="rules" element={<RulesPage />} />
             <Route path="operator-content" element={<OperatorsIndexRedirect />} />
             <Route path="operator-content/:code" element={<OperatorLayout />}>
               <Route index element={<Navigate to="general" replace />} />

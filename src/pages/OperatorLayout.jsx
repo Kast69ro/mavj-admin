@@ -1,11 +1,14 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, NavLink, Outlet, useParams } from 'react-router-dom';
-import { CalendarRange, Globe, SlidersHorizontal, Contact, Handshake, Receipt, Wallet } from 'lucide-react';
+import { CalendarRange, Globe, SlidersHorizontal, Contact, Handshake, Receipt, Wallet, ExternalLink } from 'lucide-react';
 import { fetchContentOperators, OPERATOR_STATUSES } from '../features/operatorContent/operatorContentApi';
 import { OPERATOR_COLORS } from '../utils/operatorColors';
 import { mediaUrl } from '../utils/utils';
 import { ErrorBox } from '../components/ContentModal';
+
+// Публичный сайт: страница оператора открывается по адресу {SITE_URL}/{code}/
+const SITE_URL = (import.meta.env.VITE_SITE_URL ?? 'https://mavj.tj').replace(/\/$/, '');
 
 // Разделы страницы оператора. Новая функция = новая вкладка здесь + дочерний маршрут в App.jsx
 const OPERATOR_TABS = [
@@ -94,7 +97,16 @@ const OperatorLayout = () => {
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-2xl font-bold text-gray-800">{operator.name}</h2>
+              <a
+                href={`${SITE_URL}/${operator.code}/`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Открыть страницу оператора на сайте"
+                className="group inline-flex items-center gap-1.5 text-2xl font-bold text-gray-800 hover:underline"
+              >
+                {operator.name}
+                <ExternalLink size={16} className="text-gray-400 group-hover:text-gray-600" />
+              </a>
               {!isActive && (
                 <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
                   {OPERATOR_STATUSES.find((st) => st.value === operator.status)?.label ?? operator.status}
