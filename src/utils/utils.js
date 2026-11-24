@@ -217,3 +217,32 @@ export const formatMsisdn = (value) => {
   if (!n) return value || "—";
   return `+992 ${n.slice(3, 5)} ${n.slice(5, 8)} ${n.slice(8, 10)} ${n.slice(10)}`;
 };
+
+// ===== Форматы дат и размеров =====
+
+export const MONTHS_RU = [
+  "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+  "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
+];
+
+// "1995-03-14" → "14.03.1995". Это календарная дата без времени, часовой пояс не нужен
+export const formatDay = (value) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value ?? ""));
+  return m ? `${m[3]}.${m[2]}.${m[1]}` : value || "";
+};
+
+// "2026-10" → "Октябрь 2026"
+export const formatPeriod = (value) => {
+  const m = /^(\d{4})(?:-(\d{2}))?/.exec(String(value ?? ""));
+  if (!m) return "";
+  return m[2] ? `${MONTHS_RU[Number(m[2]) - 1] ?? m[2]} ${m[1]}` : m[1];
+};
+
+// Байты → "31 КБ" / "2,4 МБ"
+export const formatFileSize = (bytes) => {
+  const n = Number(bytes);
+  if (bytes == null || bytes === "" || !Number.isFinite(n)) return "";
+  const kb = n / 1024;
+  const fmt = (v, digits) => v.toLocaleString("ru-RU", { maximumFractionDigits: digits });
+  return kb < 1024 ? `${fmt(Math.max(kb, 0.1), kb < 10 ? 1 : 0)} КБ` : `${fmt(kb / 1024, 1)} МБ`;
+};

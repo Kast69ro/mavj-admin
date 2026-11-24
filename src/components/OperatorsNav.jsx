@@ -1,21 +1,23 @@
 import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { ChevronDown } from "lucide-react";
+import { Building2, ChevronDown } from "lucide-react";
 import { fetchContentOperators } from "../features/operatorContent/operatorContentApi";
 import { OPERATOR_COLORS } from "../utils/operatorColors";
+import { useAccess } from "../utils/permissions";
 
-const BASE_PATH = "/operator-content";
+const BASE_PATH = "/settings";
 
 const OPERATOR_STATUS_LABELS = {
   inactive: "Отключён",
   coming_soon: "Скоро",
 };
 
-// Пункт сайдбара «Операторы» в виде аккордеона: внутри — отдельная ссылка на каждого оператора
+// Пункт сайдбара «Настройки» в виде аккордеона: внутри — «Наша компания» и отдельная ссылка на каждого оператора
 const OperatorsNav = ({ icon, label, onNavigate }) => {
   const dispatch = useDispatch();
   const { pathname } = useLocation();
+  const { can } = useAccess();
   const { operators, operatorsLoading, operatorsError } = useSelector((state) => state.operatorContent);
 
   const isSectionActive = pathname === BASE_PATH || pathname.startsWith(`${BASE_PATH}/`);
@@ -53,6 +55,22 @@ const OperatorsNav = ({ icon, label, onNavigate }) => {
       >
         <div className="overflow-hidden">
           <div className="ml-5 pl-3 border-l border-slate-700 py-1 space-y-0.5">
+            {can("company_documents_view") && (
+              <NavLink
+                to={`${BASE_PATH}/company`}
+                onClick={onNavigate}
+                className={({ isActive: linkActive }) =>
+                  `flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition ${
+                    linkActive
+                      ? "bg-white text-slate-900 font-semibold shadow-sm"
+                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                  }`
+                }
+              >
+                <Building2 size={14} className="-ml-0.5 shrink-0" />
+                <span className="flex-1 truncate">Наша компания</span>
+              </NavLink>
+            )}
             {operatorsLoading && operators.length === 0 && (
               <p className="px-3 py-2 text-xs text-slate-500">Загрузка…</p>
             )}

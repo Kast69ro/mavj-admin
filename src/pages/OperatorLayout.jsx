@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, NavLink, Outlet, useParams } from 'react-router-dom';
-import { CalendarRange, Globe, SlidersHorizontal, Contact, Handshake, Receipt, Wallet, ExternalLink } from 'lucide-react';
+import { CalendarRange, Globe, SlidersHorizontal, Contact, Handshake, Receipt, Wallet, FolderOpen, ExternalLink } from 'lucide-react';
 import { fetchContentOperators, OPERATOR_STATUSES } from '../features/operatorContent/operatorContentApi';
 import { OPERATOR_COLORS } from '../utils/operatorColors';
 import { mediaUrl } from '../utils/utils';
+import { useAccess } from '../utils/permissions';
 import { ErrorBox } from '../components/ContentModal';
 
 // Публичный сайт: страница оператора открывается по адресу {SITE_URL}/{code}/
@@ -19,6 +20,7 @@ const OPERATOR_TABS = [
   { path: 'partners', label: 'Партнёры', icon: <Handshake size={16} /> },
   { path: 'expenses', label: 'Расходы', icon: <Receipt size={16} /> },
   { path: 'finance', label: 'Финансы', icon: <Wallet size={16} /> },
+  { path: 'documents', label: 'Документы', icon: <FolderOpen size={16} />, permission: 'documents_view' },
 ];
 
 export const OperatorsIndexRedirect = () => {
@@ -30,11 +32,11 @@ export const OperatorsIndexRedirect = () => {
   }, [dispatch, operators.length]);
 
   const first = operators.find((o) => o.status === 'active') ?? operators[0];
-  if (first) return <Navigate to={`/operator-content/${first.code}`} replace />;
+  if (first) return <Navigate to={`/settings/${first.code}`} replace />;
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">Операторы</h2>
+      <h2 className="text-2xl font-bold text-gray-800">Настройки</h2>
       <ErrorBox>{operatorsError}</ErrorBox>
       {operatorsLoading ? (
         <p className="text-sm text-gray-400">Загрузка…</p>
@@ -52,6 +54,7 @@ export const OperatorsIndexRedirect = () => {
 const OperatorLayout = () => {
   const { code } = useParams();
   const dispatch = useDispatch();
+  const { can } = useAccess();
   const { operators, operatorsLoading, operatorsError } = useSelector((state) => state.operatorContent);
 
   useEffect(() => {
@@ -118,7 +121,7 @@ const OperatorLayout = () => {
         </div>
 
         <nav className="px-4 mt-4 flex gap-1 overflow-x-auto border-t border-gray-100">
-          {OPERATOR_TABS.map((tab) => (
+          {OPERATOR_TABS.filter((tab) => can(tab.permission)).map((tab) => (
             <NavLink
               key={tab.path}
               to={tab.path}

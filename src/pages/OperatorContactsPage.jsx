@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useOutletContext } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Phone, Mail } from 'lucide-react';
+import { Plus, Pencil, Trash2, Phone } from 'lucide-react';
 import {
   fetchOperatorContacts,
   saveOperatorContact,
@@ -9,6 +9,7 @@ import {
 } from '../features/operatorContent/operatorContentApi';
 import ContactModal from '../components/ContactModal';
 import { ConfirmModal, ErrorBox } from '../components/ContentModal';
+import { formatDay } from '../utils/utils';
 
 // Вкладка «Ответственные»: контактные лица со стороны оператора
 const OperatorContactsPage = () => {
@@ -76,35 +77,32 @@ const OperatorContactsPage = () => {
             <tr className="bg-gray-50">
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ФИО</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Должность</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Контакты</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Телефон</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Дата рождения</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Заметки</th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Действия</th>
             </tr>
           </thead>
           <tbody>
             {loading && contacts.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-6 text-center text-sm text-gray-400">Загрузка…</td></tr>
+              <tr><td colSpan={6} className="px-4 py-6 text-center text-sm text-gray-400">Загрузка…</td></tr>
             )}
             {!loading && !error && contacts.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-10 text-center text-sm text-gray-400">Ответственные не добавлены</td></tr>
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400">Ответственные не добавлены</td></tr>
             )}
             {contacts.map((c) => (
               <tr key={c.id} className="border-b border-gray-100 last:border-0 align-top">
                 <td className="px-4 py-3 text-sm font-medium text-gray-800">{c.full_name}</td>
                 <td className="px-4 py-3 text-sm text-gray-600">{c.position || '—'}</td>
-                <td className="px-4 py-3 text-sm space-y-1">
+                <td className="px-4 py-3 text-sm">
                   {c.phone && (
                     <a href={`tel:${c.phone}`} className="flex items-center gap-1.5 text-gray-700 hover:text-blue-600 whitespace-nowrap">
                       <Phone size={13} className="text-gray-400" /> {c.phone}
                     </a>
                   )}
-                  {c.email && (
-                    <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 text-gray-700 hover:text-blue-600 break-all">
-                      <Mail size={13} className="text-gray-400 shrink-0" /> {c.email}
-                    </a>
-                  )}
-                  {!c.phone && !c.email && <span className="text-gray-400">—</span>}
+                  {!c.phone && <span className="text-gray-400">—</span>}
                 </td>
+                <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{formatDay(c.birth_date) || '—'}</td>
                 <td className="px-4 py-3 text-sm text-gray-500 whitespace-pre-line max-w-xs">{c.notes || '—'}</td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex justify-end gap-2">

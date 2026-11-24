@@ -107,7 +107,7 @@ const OperatorPeriodListPage = () => {
               return (
                 <tr
                   key={p.id}
-                  onClick={() => navigate(`/operator-content/${code}/periods/${p.id}`)}
+                  onClick={() => navigate(`/settings/${code}/periods/${p.id}`)}
                   className="border-b border-gray-100 last:border-0 hover:bg-gray-50 cursor-pointer"
                 >
                   <td className="px-4 py-3 text-sm font-medium text-gray-800">{p.name}</td>
@@ -157,7 +157,7 @@ const OperatorPeriodListPage = () => {
                         <Trash2 size={16} />
                       </button>
                       <button
-                        onClick={() => navigate(`/operator-content/${code}/periods/${p.id}`)}
+                        onClick={() => navigate(`/settings/${code}/periods/${p.id}`)}
                         title="Призы и победители"
                         className="p-1.5 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded"
                       >
@@ -179,7 +179,7 @@ const OperatorPeriodListPage = () => {
             if (editPeriod) return dispatch(updateOperatorPeriod({ id: editPeriod.id, ...data })).unwrap();
             // Новый период выключен, пока нет призов — сразу открываем его, чтобы добавить призы
             const created = await dispatch(createOperatorPeriod({ code, ...data })).unwrap();
-            if (created?.id) navigate(`/operator-content/${code}/periods/${created.id}`);
+            if (created?.id) navigate(`/settings/${code}/periods/${created.id}`);
           }}
           onClose={() => { setShowCreate(false); setEditPeriod(null); }}
         />

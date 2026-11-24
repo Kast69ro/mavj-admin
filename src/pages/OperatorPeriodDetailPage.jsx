@@ -57,7 +57,7 @@ const OperatorPeriodDetailPage = () => {
   }, [dispatch, periodId]);
 
   const period = detail?.period;
-  const periodsPath = `/operator-content/${code}/periods`;
+  const periodsPath = `/settings/${code}/periods`;
 
   const prizes = useMemo(
     () => [...(detail?.prizes || [])].sort((a, b) => (a.sort_order - b.sort_order) || (a.id - b.id)),
@@ -125,7 +125,7 @@ const OperatorPeriodDetailPage = () => {
 
   // Период другого оператора — переходим на правильный адрес, чтобы сайдбар и вкладки совпадали
   if (period.operator !== code) {
-    return <Navigate to={`/operator-content/${period.operator}/periods/${period.id}`} replace />;
+    return <Navigate to={`/settings/${period.operator}/periods/${period.id}`} replace />;
   }
 
   const phase = getPeriodPhase(period, today());

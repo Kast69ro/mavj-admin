@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ContentModal, { ErrorBox, Field, inputClass } from './ContentModal';
+import { today } from '../utils/utils';
 
 const ContactModal = ({ contact, onSave, onClose }) => {
   const isEdit = Boolean(contact);
@@ -7,7 +8,7 @@ const ContactModal = ({ contact, onSave, onClose }) => {
     full_name: contact?.full_name ?? '',
     position: contact?.position ?? '',
     phone: contact?.phone ?? '',
-    email: contact?.email ?? '',
+    birth_date: contact?.birth_date ?? '',
     notes: contact?.notes ?? '',
   });
   const [saving, setSaving] = useState(false);
@@ -23,7 +24,8 @@ const ContactModal = ({ contact, onSave, onClose }) => {
         full_name: form.full_name.trim(),
         position: form.position.trim() || null,
         phone: form.phone.trim() || null,
-        email: form.email.trim() || null,
+        // пустая строка очищает сохранённую дату
+        birth_date: form.birth_date || (contact?.birth_date ? '' : null),
         notes: form.notes.trim() || null,
       });
       onClose();
@@ -47,8 +49,14 @@ const ContactModal = ({ contact, onSave, onClose }) => {
           <Field label="Телефон">
             <input type="tel" value={form.phone} onChange={set('phone')} className={inputClass} placeholder="+992…" />
           </Field>
-          <Field label="Email">
-            <input type="email" value={form.email} onChange={set('email')} className={inputClass} />
+          <Field label="Дата рождения">
+            <input
+              type="date"
+              value={form.birth_date}
+              max={today()}
+              onChange={set('birth_date')}
+              className={inputClass}
+            />
           </Field>
         </div>
         <Field label="Заметки">

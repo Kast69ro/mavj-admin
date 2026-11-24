@@ -26,8 +26,21 @@ export const Role = createAsyncThunk(
       const { data } = await axiosRequest.get('/me');
       return data;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.detail || "Ошибка получения роли");
+      return rejectWithValue(error.response?.data?.detail || "Не удалось загрузить профиль");
     }
   }
 );
 
+// Смена своего пароля. Токен после смены остаётся действующим
+export const changeMyPassword = createAsyncThunk(
+  "auth/changeMyPassword",
+  async ({ old_password, new_password }, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosRequest.post('/me/password', { old_password, new_password });
+      return data;
+    } catch (error) {
+      const detail = error.response?.data?.detail;
+      return rejectWithValue(typeof detail === "string" && detail ? detail : "Не удалось сменить пароль");
+    }
+  }
+);

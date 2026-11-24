@@ -12,10 +12,11 @@ import {
 } from "lucide-react";
 import { fetchSubscribers } from "../features/subscribers/subscribers";
 import { fetchOperators } from "../features/operators/operators";
-import { OPERATOR_COLORS } from "../utils/operatorColors"; // поправь путь под свой проект
+import { OPERATOR_COLORS, operatorName } from "../utils/operatorColors";
 import { useDispatch, useSelector } from "react-redux";
 import { useStatuses } from "../utils/statusColor";
 import { formatDate } from "../utils/utils";
+import { useAccess } from "../utils/permissions";
 import SubscriberDetailsModal from "../components/SubscriberDetailsModal";
 
 const formatMsisdn = (msisdn) => {
@@ -47,7 +48,7 @@ const StatusBadge = ({ status }) => {
 
 const OperatorBadge = ({ code, operatorsByCode }) => {
   const colors = OPERATOR_COLORS[code] ?? OPERATOR_COLORS.default;
-  const label = operatorsByCode[code]?.name ?? code;
+  const label = operatorsByCode[code]?.name ?? operatorName(code);
   return (
     <span
       className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium text-white"
@@ -189,23 +190,24 @@ const SubscribersPage = () => {
     (state) => state.subscribers,
   );
   const { info: operatorsInfo } = useSelector((state) => state.operators);
+  const { isOperatorAllowed, singleOperator, singleOperatorName } = useAccess();
+  const columnsCount = singleOperator ? 7 : 8;
 
   const operatorsByCode = (operatorsInfo ?? []).reduce((acc, op) => {
     acc[op.code] = op;
     return acc;
   }, {});
 
-  const operatorOptions = (operatorsInfo ?? []).map((op) => ({
+  const operatorOptions = (operatorsInfo ?? []).filter((op) => isOperatorAllowed(op.code)).map((op) => ({
     value: op.code,
     label: op.name,
     color: (OPERATOR_COLORS[op.code] ?? OPERATOR_COLORS.default).bg,
   }));
 
+  const operatorsLoaded = operatorsInfo.length > 0;
   useEffect(() => {
-    if (operatorsInfo.length === 0) {
-      dispatch(fetchOperators());
-    }
-  }, [dispatch, operatorsInfo]);
+    if (!operatorsLoaded) dispatch(fetchOperators());
+  }, [dispatch, operatorsLoaded]);
 
   useEffect(() => {
     dispatch(
@@ -240,7 +242,9 @@ const SubscribersPage = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Абоненты</h2>
+          <h2 className="text-2xl font-bold text-gray-800">
+            {singleOperatorName ? `Абоненты · ${singleOperatorName}` : "Абоненты"}
+          </h2>
           <p className="text-sm text-gray-500 mt-0.5">
             Всего найдено:{" "}
             <span className="font-medium text-gray-700">{total}</span>
@@ -289,12 +293,14 @@ const SubscribersPage = () => {
             <thead>
               <tr className="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 <th className="px-4 py-3">Номер</th>
-                <FilterableHeader
-                  label="Оператор"
-                  options={operatorOptions}
-                  value={operatorFilter}
-                  onChange={setOperatorFilter}
-                />
+                {!singleOperator && (
+                  <FilterableHeader
+                    label="Оператор"
+                    options={operatorOptions}
+                    value={operatorFilter}
+                    onChange={setOperatorFilter}
+                  />
+                )}
                 <th className="px-4 py-3">Сервис</th>
                 <FilterableHeader
                   label="Статус"
@@ -315,7 +321,7 @@ const SubscribersPage = () => {
               {isLoading && (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={columnsCount}
                     className="px-4 py-10 text-center text-gray-400"
                   >
                     Загрузка...
@@ -326,7 +332,7 @@ const SubscribersPage = () => {
               {!isLoading && error && (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={columnsCount}
                     className="px-4 py-10 text-center text-red-500"
                   >
                     {error}
@@ -337,7 +343,7 @@ const SubscribersPage = () => {
               {!isLoading && !error && subscribers.length === 0 && (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={columnsCount}
                     className="px-4 py-12 text-center text-gray-400"
                   >
                     <Users size={28} className="mx-auto mb-2 opacity-40" />
@@ -352,17 +358,19 @@ const SubscribersPage = () => {
                   <tr
                     key={sub.id}
                     onClick={() => setSelectedMsisdn(sub.msisdn)}
-                    className="border-b border-gray-100 hover:bg-gray-50 transition"
+                    className="border-b border-gray-100 hover:bg-gray-50 transition cursor-pointer"
                   >
                     <td className="px-4 py-3 font-medium text-gray-800">
                       {formatMsisdn(sub.msisdn)}
                     </td>
-                    <td className="px-4 py-3">
-                      <OperatorBadge
-                        code={sub.operator}
-                        operatorsByCode={operatorsByCode}
-                      />
-                    </td>
+                    {!singleOperator && (
+                      <td className="px-4 py-3">
+                        <OperatorBadge
+                          code={sub.operator}
+                          operatorsByCode={operatorsByCode}
+                        />
+                      </td>
+                    )}
                     <td className="px-4 py-3 text-gray-500">
                       {sub.service_id}
                     </td>

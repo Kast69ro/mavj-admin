@@ -1,7 +1,10 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { token } from "../../utils/utils";
-import axios from "axios";
 import { axiosRequest } from "../../utils/axiosInstance";
+
+const errorDetail = (err) => {
+  const detail = err.response?.data?.detail ?? err.response?.data?.message;
+  return typeof detail === "string" ? detail : null;
+};
 
 
 export const fetchSubscribers = createAsyncThunk(
@@ -26,7 +29,7 @@ export const fetchSubscribers = createAsyncThunk(
       return data;
     } catch (err) {
       return rejectWithValue(
-        err.response?.data?.message || "Не удалось загрузить список абонентов"
+        errorDetail(err) || "Не удалось загрузить список абонентов"
       );
     }
   }
@@ -46,7 +49,7 @@ export const fetchSubscriberQuiz = createAsyncThunk(
       return data;
     } catch (err) {
       return rejectWithValue(
-        err.response?.data?.message || "Не удалось загрузить данные абонента"
+        errorDetail(err) || "Не удалось загрузить данные абонента"
       );
     }
   }
@@ -60,9 +63,31 @@ export const fetchSubscriberFull = createAsyncThunk(
       return data;
     } catch (err) {
       return rejectWithValue(
-        err.response?.data?.message || "Не удалось загрузить карточку абонента"
+        errorDetail(err) || "Не удалось загрузить карточку абонента"
       );
     }
   }
 );
 
+// ===== Карточка абонента по дням (дни — по Душанбе) =====
+// Данные живут в состоянии таблицы, поэтому это обычные функции, а не thunk
+
+export const fetchSubscriberDays = async (msisdn, { date_from, date_to } = {}) => {
+  try {
+    const { data } = await axiosRequest.get(`/subscribers/${msisdn}/days`, {
+      params: { date_from: date_from || undefined, date_to: date_to || undefined },
+    });
+    return data;
+  } catch (err) {
+    throw new Error(errorDetail(err) || "Не удалось загрузить историю по дням");
+  }
+};
+
+export const fetchSubscriberDay = async (msisdn, day) => {
+  try {
+    const { data } = await axiosRequest.get(`/subscribers/${msisdn}/days/${day}`);
+    return data;
+  } catch (err) {
+    throw new Error(errorDetail(err) || "Не удалось загрузить подробности дня");
+  }
+};

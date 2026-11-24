@@ -23,6 +23,7 @@ import { fetchOperators } from "../features/operators/operators";
 import { fetchAllFinance } from "../features/operatorContent/operatorContentApi";
 import FinanceSummary from "../components/FinanceSummary";
 import { OPERATOR_COLORS } from "../utils/operatorColors";
+import { useAccess } from "../utils/permissions";
 
 // Чистая прибыль по всем включённым операторам за те же даты, что и биллинг
 const NetProfitSection = ({ dateFrom, dateTo }) => {
@@ -130,7 +131,11 @@ const BillingPage = () => {
   const [activePreset, setActivePreset] = useState("today");
   const [dateFrom, setDateFrom] = useState(todayRange.from);
   const [dateTo, setDateTo] = useState(todayRange.to);
-  const [operator, setOperator] = useState("");
+  const [selectedOperator, setOperator] = useState("");
+
+  // Роли с одним оператором (Tcell) выбирать нечего. Сервер всё равно ограничивает данные сам
+  const { can, isOperatorAllowed, singleOperator, singleOperatorName } = useAccess();
+  const operator = singleOperator ?? selectedOperator;
 
   const { data, loading, error } = useSelector((state) => state.billing);
   const { info } = useSelector((state) => state.operators);
@@ -151,7 +156,9 @@ const BillingPage = () => {
   }, [dateFrom, dateTo, operator, dispatch]);
 
   const periodSelected = Boolean(dateFrom && dateTo);
-  const operatorOptions = useMemo(() => buildOperatorOptions(info), [info]);
+  const operatorOptions = useMemo(() => buildOperatorOptions(info), [info]).filter(
+    (o) => o.isAll || isOperatorAllowed(o.value),
+  );
 
   const handlePresetClick = (key) => {
     setActivePreset(key);
@@ -184,7 +191,9 @@ const BillingPage = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">Биллинг</h2>
+      <h2 className="text-2xl font-bold text-gray-800">
+        {singleOperatorName ? `Биллинг · ${singleOperatorName}` : "Биллинг"}
+      </h2>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-6">
@@ -231,6 +240,7 @@ const BillingPage = () => {
         </div>
 
         <div className="flex flex-wrap items-end justify-between gap-4 pt-1 border-t border-gray-100">
+          {!singleOperator && (
           <div className="space-y-2 pt-4">
             <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
               Компания
@@ -276,6 +286,7 @@ const BillingPage = () => {
               })}
             </div>
           </div>
+          )}
 
           <p className="text-sm text-gray-500 pt-4">
             Срез: <span className="font-bold text-gray-800">{today()}</span>
@@ -410,7 +421,7 @@ const BillingPage = () => {
             </div>
           </div>
 
-          <NetProfitSection dateFrom={dateFrom} dateTo={dateTo} />
+          {can("profit_view") && <NetProfitSection dateFrom={dateFrom} dateTo={dateTo} />}
         </>
       )}
     </div>
